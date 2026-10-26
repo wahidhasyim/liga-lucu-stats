@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { formatAngka, formatDesimal, formatPersen } from '../lib/format'
 import type { PlayerStats, StatKey } from '../stats/compute'
@@ -27,8 +28,20 @@ interface Props {
 }
 
 export function StatTable({ rows, urut, onUrut }: Props) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Di layar sempit, geser tabel supaya kolom yang sedang diurutkan terlihat di samping kolom nama.
+  useEffect(() => {
+    const box = scrollRef.current
+    const th = box?.querySelector<HTMLElement>('th[aria-sort="descending"]')
+    const nameCol = box?.querySelector<HTMLElement>('th.c-name')
+    if (!box || !th || !nameCol) return
+    const tampak = th.offsetLeft >= box.scrollLeft + nameCol.offsetWidth && th.offsetLeft + th.offsetWidth <= box.scrollLeft + box.clientWidth
+    if (!tampak) box.scrollTo({ left: th.offsetLeft - nameCol.offsetWidth })
+  }, [urut])
+
   return (
-    <div className="table-scroll">
+    <div className="table-scroll" ref={scrollRef}>
       <table className="stat-table">
         <thead>
           <tr>
