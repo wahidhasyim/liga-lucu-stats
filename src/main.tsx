@@ -5,6 +5,7 @@ import { Layout } from './components/Layout'
 import { NotFound } from './components/StatusStates'
 import { DataProvider } from './data/DataProvider'
 import Home from './pages/Home'
+import Stats from './pages/Stats'
 import './styles/tokens.css'
 import './styles/global.css'
 
@@ -15,6 +16,7 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<Home />} />
+            <Route path="statistik" element={<Stats />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
