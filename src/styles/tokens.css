@@ -1,0 +1,13 @@
+:root {
+  --bg: #070707;
+  --panel: #101010;
+  --line: #232019;
+  --gold: #c9a24d;
+  --gold-dim: #8f7536;
+  --ink: #f4f1ea;
+  --mute: #8a8578;
+  --font-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
+  --font-body: 'Montserrat', system-ui, sans-serif;
+  --gutter: 16px;
+  --max: 1080px;
+}
