@@ -1,0 +1,11 @@
+id,nama,panggilan,posisi,foto_url,aktif
+P01,Budi Santoso,Budi,FWD,,TRUE
+P02,Raka Pratama,Raka,MID,,TRUE
+P03,Dimas Aji,Dimas,FWD,,TRUE
+P04,Fajar Nugroho,Fajar,DEF,,TRUE
+P05,Ilham Saputra,Ilham,GK,,TRUE
+P06,Yoga Firmansyah,Yoga,MID,,TRUE
+P07,Rizky Hidayat,Rizky,DEF,,TRUE
+P08,Andre Wijaya,Andre,MID,,TRUE
+P09,Taufik Hamdani,Taufik,GK,,TRUE
+P10,Hendra Kusuma,Hendra,FWD,,FALSE
