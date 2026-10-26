@@ -104,7 +104,7 @@ Mengikuti poster brand Liga Lucu Depok (hitam, emas, putih). Desain disetujui le
   - Kartu tanpa bayangan tebal dan tanpa sudut membulat besar.
   - Hanya satu warna aksen (emas).
   - Elemen bola hadir lewat logo dan tipografi, bukan clip-art.
-- **Logo:** menggunakan logo asli dari admin (PNG transparan atau SVG). Selama belum ada, dipakai lingkaran emas berisi inisial "LLD".
+- **Logo:** `public/logo.svg` (SVG resmi, emas ring `#AA9050`). Dipakai di nav, hero beranda dengan glow emas di belakangnya, dan favicon. Token `--gold #C9A24D` (dari poster) tetap dipakai untuk teks/aksen karena lebih terang dan kontras di latar hitam.
 - **Foto pemain:** kalau `foto_url` kosong, ditampilkan inisial panggilan di atas panel gelap dengan garis bawah emas.
 - **Mobile-first:** lebar acuan 375px, tanpa scroll horizontal di level halaman.
 
