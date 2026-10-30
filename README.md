@@ -13,11 +13,19 @@ npm run build   # build produksi ke dist/
 
 Kalau env var belum diisi, website memakai data contoh dari `sheet-template/`.
 
-## Deploy ke Vercel
+## Deploy ke Firebase Hosting
+
+```bash
+firebase deploy --only hosting   # build otomatis, lalu upload ke https://ligalucudepok.web.app
+```
+
+Link Google Sheets diambil dari file `.env.production.local` (tidak ikut ke git) saat build. Isinya 5 baris `VITE_SHEET_*` seperti di `.env.example`.
+
+## Deploy ke Vercel (alternatif)
 
 1. Push repo ini ke GitHub.
 2. Di Vercel, pilih **Add New → Project**, import repo ini, lalu pilih framework **Vite**.
-3. Isi 4 environment variable `VITE_SHEET_*`. Daftarnya ada di `.env.example`.
+3. Isi 5 environment variable `VITE_SHEET_*`. Daftarnya ada di `.env.example`.
 4. Klik **Deploy**.
 
 Cara menyiapkan Google Sheets dan mengisi data mingguan dijelaskan di [SETUP-SHEETS.md](SETUP-SHEETS.md).
