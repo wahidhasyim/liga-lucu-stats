@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet, useLocation, useOutletContext } from 'react-router-dom'
 import { useLeagueState } from '../data/DataProvider'
 import type { LeagueData } from '../data/types'
+import { catatHalaman } from '../lib/analytics'
 import { Nav } from './Nav'
 import { ErrorState, LoadingState } from './StatusStates'
 
@@ -15,6 +16,7 @@ export function Layout() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
+    catatHalaman(pathname)
   }, [pathname])
 
   return (
