@@ -1,18 +1,31 @@
 # Panduan Admin: Google Sheets
 
-Semua data website diambil dari satu file Google Sheets. Admin cukup mengisi sheet. Website ikut berubah sendiri tanpa perlu menyentuh kode.
+Semua data website tersimpan di satu Google Sheet, **[Data Liga Lucu Depok](https://docs.google.com/spreadsheets/d/1Z0RTEO_EzG3iJB4zz_o7mKki1HZ0bc-MVN2A6a4JTHQ/edit)**, milik akun hasyimwahid694@gmail.com. Website membaca dan menulis sheet ini lewat Apps Script yang menempel di sheet tersebut. Kode Apps Script-nya ada di `apps-script/Code.gs`.
 
-## 1. Buat sheet dari template
+| Bagian | Alamat |
+|---|---|
+| Web publik | https://ligalucudepok.web.app |
+| Halaman admin | https://ligalucudepok.web.app/admin (pakai PIN) |
+| Editor Apps Script | https://script.google.com/d/181OenjMKMmC7-5UIpsxxZQG3pOgBSA2RHqSfxAE2Sv9lhR5TUWUqIaLi/edit |
+| Web app (API) | `API_URL` di `src/config.ts` |
 
-1. Buka [sheets.new](https://sheets.new) untuk membuat Google Sheet baru, lalu beri nama, misalnya **Data Liga Lucu Depok**.
-2. Buat 5 tab dengan nama persis seperti ini: **Pemain**, **Sesi**, **Statistik**, **Laga**, **Poin**.
-3. Isi tiap tab dengan file CSV dari folder `sheet-template/`:
-   1. Buka tab yang mau diisi.
-   2. Pilih **File → Impor → Upload**, lalu pilih file CSV yang namanya sama dengan tab tersebut.
-   3. Pada pilihan lokasi impor, pilih **Ganti sheet saat ini**.
-4. Hapus baris contoh di tab Pemain, Sesi, Statistik, dan Laga, lalu ganti dengan data asli. **Baris pertama (judul kolom) jangan diubah.**
+Perubahan dari halaman admin langsung tersimpan ke sheet. Web publik ikut berubah paling lama 1 menit kemudian, karena datanya di-cache selama 1 menit.
 
-## 2. Isi kolom
+## Rutinitas mingguan (lewat halaman admin)
+
+Buka https://ligalucudepok.web.app/admin dari HP, lalu masukkan PIN.
+
+1. **Sebelum main, buka tab Sesi.** Pilih **+ Sesi baru**, lalu isi tanggal dan lokasi. Centang pemain yang hadir, lalu tekan **Acak seimbang** atau pilih tim A–D satu per satu. Nama tim bisa diganti sesukamu. Setelah itu tekan **Buat sesi**.
+2. **Setelah main, buka tab Hasil.** Isi skor tiap laga. Laga yang tidak jadi dimainkan bisa dihapus dengan ✕. Isi gol dan assist tiap pemain dengan tombol −/+, pilih MOTM dengan ★, lalu tekan **Simpan hasil**.
+3. **Ada anggota baru? Buka tab Pemain** dan tekan **+ Tambah pemain**. Anggota yang sudah tidak ikut bisa dinonaktifkan; riwayatnya tetap tersimpan.
+
+## Mengganti PIN admin
+
+Buka editor Apps Script, lalu pilih **Project Settings** (ikon gear) → **Script properties**. Ubah nilai `ADMIN_PIN`, lalu klik **Save script properties**. Setelah itu, admin perlu masuk lagi dengan PIN yang baru.
+
+## Isi sheet (kalau mau mengedit langsung)
+
+Halaman admin sudah mengisi semua kolom ini. Bagian ini hanya perlu dibaca kalau kamu mengedit sheet secara manual. **Baris pertama (judul kolom) jangan diubah.**
 
 ### Tab `Pemain` (diisi sekali, ditambah kalau ada anggota baru)
 
@@ -66,7 +79,7 @@ Dari tab ini web membuat **klasemen sesi** (menang 3 poin, seri 1, kalah 0; urut
 
 Nilai poin untuk setiap aksi bisa diubah sesuka komunitas. Aksi yang tersedia: `hadir`, `gol`, `assist`, `motm`, `menang`, `seri`, dan `kalah` (opsional, boleh minus). Rating pemain dihitung dari total poin ini. Karena `menang`, `seri`, dan `kalah` dihitung per laga, nilainya sengaja kecil (template: menang 1, seri 0,5) supaya tidak mengalahkan poin gol.
 
-## 3. Pasang dropdown supaya admin tidak salah ketik (disarankan)
+### Dropdown supaya tidak salah ketik (opsional)
 
 Blok kolom yang mau diberi dropdown, lalu pilih **Data → Validasi data → Tambahkan aturan**:
 
@@ -79,64 +92,23 @@ Blok kolom yang mau diberi dropdown, lalu pilih **Data → Validasi data → Tam
 
 Supaya kolom `tanggal` tidak diubah otomatis oleh Sheets, blok kolom `Sesi!B:B`, lalu pilih **Format → Angka → Teks biasa**.
 
-## 4. Publikasikan ke web
+## Memperbarui Apps Script (untuk pengelola website)
 
-1. Pilih **File → Bagikan → Publikasikan ke web**.
-2. Pada pilihan pertama, pilih tab **Pemain**. Pada pilihan kedua, pilih **Nilai yang dipisahkan koma (.csv)**.
-3. Klik **Publikasikan**, lalu salin link yang muncul.
-4. Ulangi langkah 2–3 untuk tab **Sesi**, **Statistik**, **Laga**, dan **Poin**. Hasilnya 5 link.
+Kode di `apps-script/` terhubung ke project Apps Script lewat [clasp](https://github.com/google/clasp) (`apps-script/.clasp.json`).
 
-Link ini hanya bisa dipakai untuk membaca data. Orang lain tidak bisa mengedit sheet lewat link tersebut.
+```bash
+cd apps-script
+npx @google/clasp push --force
+npx @google/clasp deploy -i AKfycbwqbBweUYb_NpWkpJt56KSLZdqm2TqjtAbl-6by_yAoW4achQT8D-n0WE3SMbP3c1pZaA
+```
 
-## 5. Pasang API halaman admin (sekali saja)
-
-Halaman admin (`/admin`) menulis langsung ke sheet ini lewat Apps Script.
-
-1. Di Google Sheet, pilih **Ekstensi → Apps Script**.
-2. Hapus semua isi file `Code.gs`, lalu tempel seluruh isi file [`apps-script/Code.gs`](apps-script/Code.gs) dari repo ini. Klik ikon **Simpan**.
-3. Klik ikon gear **Project Settings**. Di bagian **Script properties**, klik **Add script property**:
-   - Property: `ADMIN_PIN`
-   - Value: PIN admin pilihanmu, misalnya 6 angka. Jangan pakai `1234`.
-4. Klik **Deploy → New deployment**. Pada ikon gear di samping "Select type", pilih **Web app**, lalu isi:
-   - **Execute as:** Me
-   - **Who has access:** Anyone
-5. Klik **Deploy**. Google akan meminta izin akses ke spreadsheet. Pilih akunmu, klik **Advanced → Go to … (unsafe)**, lalu **Allow**. Peringatan ini muncul karena script-nya buatan sendiri, bukan dari Google.
-6. Salin **Web app URL** (berakhiran `/exec`).
-
-"Anyone" artinya siapa pun bisa mengirim request ke URL itu, tetapi tanpa PIN yang benar semua request ditolak. Setelah 10 kali PIN salah, API dikunci selama 10 menit.
-
-Kalau nanti `Code.gs` diperbarui, tempel versi barunya, lalu pilih **Deploy → Manage deployments → ikon pensil → Version: New version → Deploy**. URL-nya tetap sama.
-
-## 6. Sambungkan ke website (sekali saja)
-
-Kirim 6 link ini ke pengelola website: 5 link CSV dari langkah 4 dan Web app URL dari langkah 5. Link-link ini disimpan di `src/config.ts`. Pengelola website juga bisa mengisinya lewat environment variable berikut:
-
-| Nama | Isi |
-|---|---|
-| `VITE_SHEET_PEMAIN_URL` | link CSV tab Pemain |
-| `VITE_SHEET_SESI_URL` | link CSV tab Sesi |
-| `VITE_SHEET_STATISTIK_URL` | link CSV tab Statistik |
-| `VITE_SHEET_LAGA_URL` | link CSV tab Laga |
-| `VITE_SHEET_POIN_URL` | link CSV tab Poin |
-| `VITE_ADMIN_API_URL` | Web app URL dari Apps Script |
-
-Setelah itu website perlu di-deploy ulang dengan perintah `firebase deploy --only hosting`.
-
-## Rutinitas mingguan (lewat halaman admin)
-
-Buka `https://ligalucudepok.web.app/admin` dari HP, lalu masukkan PIN.
-
-1. **Sebelum main, buka tab Sesi.** Pilih **+ Sesi baru**, lalu isi tanggal dan lokasi. Centang pemain yang hadir, lalu tekan **Acak seimbang** atau pilih tim A–D satu per satu. Nama tim bisa diganti sesukamu. Setelah itu tekan **Buat sesi**.
-2. **Setelah main, buka tab Hasil.** Isi skor tiap laga. Laga yang tidak jadi dimainkan bisa dihapus dengan ✕. Isi gol dan assist tiap pemain dengan tombol −/+, pilih MOTM dengan ★, lalu tekan **Simpan hasil**.
-3. **Ada anggota baru? Buka tab Pemain** dan tekan **+ Tambah pemain**. Anggota yang sudah tidak ikut bisa dinonaktifkan; riwayatnya tetap tersimpan.
-
-Perubahan langsung terlihat di halaman admin. Di web publik, perubahan baru muncul sekitar 5 menit kemudian, karena Google menyimpan cache untuk link yang dipublikasikan. Semua data tetap bisa dilihat dan dikoreksi langsung di Google Sheets.
+Perintah `deploy -i` memperbarui deployment yang sudah ada, jadi URL Web app tetap sama. Kalau ada izin baru yang diperlukan, jalankan fungsi `doGet` sekali dari editor Apps Script, lalu setujui izinnya.
 
 ## Kalau ada yang aneh
 
 - **Data pemain atau sesi tidak muncul.** Cek apakah `pemain_id` dan `sesi_id` di tab Statistik sudah persis sama dengan yang ada di tab Pemain dan tab Sesi. Baris dengan ID yang salah dilewati secara otomatis.
-- **Website menampilkan "Data belum bisa dimuat".** Pastikan kelima tab masih berstatus dipublikasikan (langkah 4) dan semua link sudah diisi di Vercel.
+- **Website menampilkan "Data belum bisa dimuat".** Buka link Web app di bawah. Kalau hasilnya bukan teks berawalan `{"ok":true`, cek apakah deployment Apps Script masih ada dan berakses **Anyone**.
 - **Pemain dapat 0 laga padahal timnya main.** Cek ejaan kolom `tim` di tab Statistik; harus sama dengan nama tim di tab Laga.
 - **Halaman admin bilang "PIN salah" padahal benar.** Cek `ADMIN_PIN` di Script properties (spasi ikut dihitung). Kalau muncul "Terlalu banyak PIN salah", tunggu 10 menit.
-- **Halaman admin bilang "Tidak bisa menghubungi server".** Pastikan Web app di-deploy dengan akses **Anyone** dan URL yang dipakai berakhiran `/exec`.
+- **Halaman admin bilang "Tidak bisa menghubungi server".** Pastikan deployment Web app masih ada dan berakses **Anyone**.
 - **Foto tidak tampil.** Pastikan link foto bisa dibuka di jendela incognito. Untuk Google Drive, ubah akses file menjadi "Siapa saja yang memiliki link".

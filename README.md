@@ -1,6 +1,6 @@
 # Liga Lucu Depok
 
-Website statistik pemain untuk komunitas fun football Liga Lucu Depok. Isinya leaderboard, profil pemain, dan arsip sesi mingguan. Semua data diambil dari Google Sheets.
+Website statistik pemain untuk komunitas fun football Liga Lucu Depok. Isinya leaderboard, profil pemain, arsip sesi mingguan, dan halaman admin. Semua data tersimpan di Google Sheets dan dibaca/ditulis lewat Google Apps Script.
 
 ## Jalankan di komputer
 
@@ -11,7 +11,11 @@ npm test        # unit test
 npm run build   # build produksi ke dist/
 ```
 
-Kalau env var belum diisi, website memakai data contoh dari `sheet-template/`.
+Secara default, `npm run dev` memakai data asli lewat `API_URL` di `src/config.ts`, **termasuk saat menyimpan dari halaman admin**. Untuk mencoba dengan data contoh dari `sheet-template/`, jalankan:
+
+```bash
+VITE_API_URL= npm run dev   # data contoh; PIN admin 1234; perubahan hilang saat reload
+```
 
 ## Deploy ke Firebase Hosting
 
@@ -19,24 +23,15 @@ Kalau env var belum diisi, website memakai data contoh dari `sheet-template/`.
 firebase deploy --only hosting   # build otomatis, lalu upload ke https://ligalucudepok.web.app
 ```
 
-Link Google Sheets diambil dari file `.env.production.local` (tidak ikut ke git) saat build. Isinya 5 baris `VITE_SHEET_*` seperti di `.env.example`.
-
-## Deploy ke Vercel (alternatif)
-
-1. Push repo ini ke GitHub.
-2. Di Vercel, pilih **Add New → Project**, import repo ini, lalu pilih framework **Vite**.
-3. Isi 5 environment variable `VITE_SHEET_*`. Daftarnya ada di `.env.example`.
-4. Klik **Deploy**.
-
-Cara menyiapkan Google Sheets dan mengisi data mingguan dijelaskan di [SETUP-SHEETS.md](SETUP-SHEETS.md).
+Link Google Sheet, editor Apps Script, dan cara memperbarui script ada di [SETUP-SHEETS.md](SETUP-SHEETS.md).
 
 ## Halaman admin
 
-`/admin` dipakai untuk mengelola pemain, line-up sesi, dan hasil pertandingan dari HP. Halaman ini menulis ke Google Sheets lewat `apps-script/Code.gs`; cara memasangnya ada di SETUP-SHEETS.md. Saat `npm run dev` tanpa `VITE_ADMIN_API_URL`, admin berjalan di atas data contoh dengan PIN `1234`, dan perubahannya hilang saat halaman dimuat ulang.
+`/admin` dipakai untuk mengelola pemain, line-up sesi, dan hasil pertandingan dari HP, dengan PIN admin yang disimpan di Script properties Apps Script. Halaman ini menulis ke Google Sheets lewat `apps-script/Code.gs`.
 
 ## Struktur kode
 
-- `src/data/`: mengambil CSV dari Google Sheets dan memvalidasi isinya.
+- `src/data/`: mengambil data (Apps Script, atau CSV sebagai cadangan) dan memvalidasi isinya.
 - `src/admin/` dan `apps-script/`: halaman admin dan API Google Apps Script-nya.
 - `src/stats/`: menghitung rating, peringkat, dan riwayat pemain. Semuanya fungsi murni yang ada tesnya.
 - `src/pages/` dan `src/components/`: tampilan website.

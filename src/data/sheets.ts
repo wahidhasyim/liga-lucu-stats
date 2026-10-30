@@ -1,5 +1,5 @@
 import Papa from 'papaparse'
-import { SHEET_URLS } from '../config'
+import { API_URL, SHEET_URLS } from '../config'
 import { parseLeague } from './parse'
 import type { LeagueData, RawTables, Row } from './types'
 
@@ -16,7 +16,7 @@ export const SAMPLE: Record<Tabel, () => Promise<string>> = {
 }
 
 // Data contoh tidak pernah dicampur dengan data asli.
-const PAKAI_CONTOH = TABEL.every((t) => !SHEET_URLS[t])
+const PAKAI_CONTOH = !API_URL && TABEL.every((t) => !SHEET_URLS[t])
 
 export function parseCsv(text: string): Row[] {
   return Papa.parse<Row>(text, {
@@ -40,7 +40,17 @@ async function loadText(tabel: Tabel): Promise<string> {
   return text
 }
 
+// Apps Script (doGet) mengembalikan semua tab sekaligus dalam bentuk baris objek.
+async function loadViaApi(): Promise<LeagueData> {
+  const res = await fetch(API_URL)
+  if (!res.ok) throw new Error(`Gagal memuat data (HTTP ${res.status})`)
+  const balasan: { ok: boolean; error?: string; data?: RawTables } = await res.json()
+  if (!balasan.ok || !balasan.data) throw new Error(balasan.error ?? 'Data tidak valid.')
+  return parseLeague(balasan.data)
+}
+
 export async function loadLeague(): Promise<LeagueData> {
+  if (API_URL) return loadViaApi()
   const [pemain, sesi, statistik, laga, poin] = (await Promise.all(TABEL.map(loadText))).map(parseCsv)
   return parseLeague({ pemain, sesi, statistik, laga, poin })
 }

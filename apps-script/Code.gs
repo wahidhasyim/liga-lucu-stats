@@ -1,10 +1,11 @@
 /**
  * Liga Lucu Depok: API halaman admin.
  *
- * Cara pasang (sekali saja, lihat SETUP-SHEETS.md):
- * 1. Di Google Sheet data liga, buka Ekstensi → Apps Script, hapus isi Code.gs, tempel file ini, simpan.
- * 2. Project Settings (ikon gear) → Script properties → tambahkan ADMIN_PIN berisi PIN admin.
- * 3. Deploy → New deployment → Web app. Execute as: Me. Who has access: Anyone. Salin URL-nya.
+ * GET  → data semua tab untuk web publik (tanpa PIN; datanya memang publik). Di-cache 1 menit.
+ * POST → aksi admin, wajib PIN. Body JSON: { pin, action, data }.
+ *
+ * Cara pasang ada di SETUP-SHEETS.md. Setelah deploy pertama, aksi "pasang" (tanpa PIN, hanya
+ * berlaku selama ADMIN_PIN belum ada) menyiapkan header semua tab dan menyimpan PIN admin.
  */
 
 const TAB = { pemain: 'Pemain', sesi: 'Sesi', statistik: 'Statistik', laga: 'Laga', poin: 'Poin' }
@@ -18,9 +19,31 @@ const KOLOM = {
   poin: ['aksi', 'poin'],
 }
 
-const KOLOM_ANGKA = ['gol', 'assist', 'motm', 'skor_a', 'skor_b']
+const KOLOM_ANGKA = ['gol', 'assist', 'motm', 'skor_a', 'skor_b', 'poin']
 const POSISI = ['GK', 'DEF', 'MID', 'FWD']
 const MAKS_GAGAL = 10
+const POIN_AWAL = [
+  ['hadir', 1],
+  ['gol', 3],
+  ['assist', 2],
+  ['motm', 5],
+  ['menang', 1],
+  ['seri', 0.5],
+]
+const KUNCI_CACHE = 'data_publik'
+
+function doGet() {
+  const cache = CacheService.getScriptCache()
+  let isi = cache.get(KUNCI_CACHE)
+  if (!isi) {
+    isi = JSON.stringify({ ok: true, data: bacaSemua() })
+    // nilai cache maksimal 100 KB; data yang lebih besar dibaca langsung setiap kali
+    try {
+      cache.put(KUNCI_CACHE, isi, 60)
+    } catch (err) {}
+  }
+  return ContentService.createTextOutput(isi).setMimeType(ContentService.MimeType.JSON)
+}
 
 function doPost(e) {
   let req
@@ -29,6 +52,7 @@ function doPost(e) {
   } catch (err) {
     return balas({ ok: false, error: 'Request tidak valid.' })
   }
+  if (req.action === 'pasang') return balas(pasang(String(req.pin || '')))
   const salahPin = cekPin(String(req.pin || ''))
   if (salahPin) return balas({ ok: false, error: salahPin })
   const aksi = AKSI[req.action]
@@ -38,6 +62,7 @@ function doPost(e) {
   lock.waitLock(20000)
   try {
     const hasil = aksi(req.data || {})
+    CacheService.getScriptCache().remove(KUNCI_CACHE)
     return balas({ ok: true, hasil, data: bacaSemua() })
   } catch (err) {
     return balas({ ok: false, error: err.message })
@@ -61,6 +86,27 @@ function cekPin(pin) {
     return 'PIN salah.'
   }
   return null
+}
+
+// Sekali jalan setelah deploy pertama: siapkan semua tab dan simpan PIN admin.
+function pasang(pin) {
+  const props = PropertiesService.getScriptProperties()
+  if (props.getProperty('ADMIN_PIN')) return { ok: false, error: 'Sudah terpasang. Ganti PIN lewat Script properties.' }
+  if (!/^\S{4,}$/.test(pin)) return { ok: false, error: 'PIN minimal 4 karakter tanpa spasi.' }
+  const lock = LockService.getScriptLock()
+  lock.waitLock(20000)
+  try {
+    Object.keys(TAB).forEach((nama) => tabel(nama))
+    const poin = tabel('poin')
+    if (poin.rows.length === 0) {
+      poin.rows = POIN_AWAL.map(([aksi, nilai]) => ({ aksi, poin: nilai }))
+      tulis(poin)
+    }
+    props.setProperty('ADMIN_PIN', pin)
+    return { ok: true, data: bacaSemua() }
+  } finally {
+    lock.releaseLock()
+  }
 }
 
 const AKSI = {

@@ -79,8 +79,8 @@ export function buatGas(isi: Record<string, Grid>, props: Record<string, string>
   }
   const globals = {
     SpreadsheetApp: { getActiveSpreadsheet: () => ss },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: (k: string) => props[k] ?? null }) },
-    CacheService: { getScriptCache: () => ({ get: (k: string) => cache.get(k) ?? null, put: (k: string, v: string) => void cache.set(k, v) }) },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: (k: string) => props[k] ?? null, setProperty: (k: string, v: string) => void (props[k] = v) }) },
+    CacheService: { getScriptCache: () => ({ get: (k: string) => cache.get(k) ?? null, put: (k: string, v: string) => void cache.set(k, v), remove: (k: string) => void cache.delete(k) }) },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
     ContentService: {
       MimeType: { JSON: 'application/json' },
@@ -94,10 +94,14 @@ export function buatGas(isi: Record<string, Grid>, props: Record<string, string>
   return { globals, sheets }
 }
 
-export type DoPost = (e: { postData: { contents: string } }) => { getContent(): string }
+type Keluaran = { getContent(): string }
+export interface Script {
+  doPost: (e: { postData: { contents: string } }) => Keluaran
+  doGet: () => Keluaran
+}
 
-// Menjalankan teks Code.gs dengan global tiruan dan mengembalikan doPost-nya.
-export function muatScript(kode: string, globals: Record<string, unknown>): DoPost {
+// Menjalankan teks Code.gs dengan global tiruan dan mengembalikan entry point-nya.
+export function muatScript(kode: string, globals: Record<string, unknown>): Script {
   const nama = Object.keys(globals)
-  return new Function(...nama, `${kode}\nreturn doPost`)(...nama.map((n) => globals[n])) as DoPost
+  return new Function(...nama, `${kode}\nreturn { doPost, doGet }`)(...nama.map((n) => globals[n])) as Script
 }

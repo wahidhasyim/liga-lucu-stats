@@ -4,7 +4,7 @@ import { buatGas, muatScript } from './gasShim'
 
 const PIN = '4321'
 
-function siapkan(isi: Parameters<typeof buatGas>[0] = {}) {
+function siapkan(isi: Parameters<typeof buatGas>[0] = {}, props: Record<string, string> = { ADMIN_PIN: PIN }) {
   const gas = buatGas(
     {
       Pemain: [
@@ -27,12 +27,13 @@ function siapkan(isi: Parameters<typeof buatGas>[0] = {}) {
       ],
       ...isi,
     },
-    { ADMIN_PIN: PIN },
+    props,
   )
-  const doPost = muatScript(kode, gas.globals)
+  const { doPost, doGet } = muatScript(kode, gas.globals)
   const kirim = (action: string, data?: unknown, pin = PIN) => JSON.parse(doPost({ postData: { contents: JSON.stringify({ pin, action, data }) } }).getContent())
   const grid = (tab: string) => gas.sheets.get(tab)!.grid.filter((r) => r.some((c) => c !== ''))
-  return { kirim, grid }
+  const bacaPublik = () => JSON.parse(doGet().getContent())
+  return { kirim, grid, bacaPublik, props }
 }
 
 describe('Code.gs: PIN', () => {
@@ -188,5 +189,31 @@ describe('Code.gs: hapusSesi', () => {
     const res = kirim('hapusSesi', { id: 'S001' })
     expect([res.data.sesi, res.data.statistik, res.data.laga]).toEqual([[], [], []])
     expect(kirim('hapusSesi', { id: 'S001' }).error).toMatch(/S001/)
+  })
+})
+
+describe('Code.gs: pasang', () => {
+  it('sets up every tab, default poin and the PIN once', () => {
+    const gas = buatGas({}, {})
+    const { doPost } = muatScript(kode, gas.globals)
+    const pasang = (pin: string) => JSON.parse(doPost({ postData: { contents: JSON.stringify({ action: 'pasang', pin }) } }).getContent())
+    expect(pasang('12').error).toMatch(/minimal/)
+    const res = pasang('987654')
+    expect(res.ok).toBe(true)
+    expect(res.data.pemain).toEqual([])
+    expect(res.data.poin).toContainEqual({ aksi: 'seri', poin: '0.5' })
+    expect(gas.sheets.get('Statistik')!.grid[0]).toEqual(['sesi_id', 'pemain_id', 'tim', 'hasil', 'gol', 'assist', 'motm'])
+    expect(pasang('111111').error).toMatch(/Sudah terpasang/)
+    const baca = JSON.parse(doPost({ postData: { contents: JSON.stringify({ action: 'baca', pin: '987654' }) } }).getContent())
+    expect(baca.ok).toBe(true)
+  })
+})
+
+describe('Code.gs: doGet', () => {
+  it('serves data without a PIN and refreshes after an admin write', () => {
+    const { kirim, bacaPublik } = siapkan()
+    expect(bacaPublik().data.pemain).toHaveLength(3)
+    kirim('simpanPemain', { nama: 'Pemain Baru' })
+    expect(bacaPublik().data.pemain).toHaveLength(4)
   })
 })

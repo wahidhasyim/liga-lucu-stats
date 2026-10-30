@@ -1,4 +1,4 @@
-import { ADMIN_API_URL } from '../config'
+import { API_URL } from '../config'
 import { parseLeague } from '../data/parse'
 import type { LeagueData, RawTables } from '../data/types'
 
@@ -15,7 +15,7 @@ type Transport = (body: string) => Promise<Balasan>
 
 // Content-Type text/plain supaya browser tidak mengirim preflight CORS (Apps Script tidak menjawabnya).
 const viaApi: Transport = async (body) => {
-  const res = await fetch(ADMIN_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body })
+  const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body })
   if (!res.ok) throw new Error(`Server admin error (HTTP ${res.status})`)
   return res.json()
 }
@@ -23,11 +23,11 @@ const viaApi: Transport = async (body) => {
 let transport: Promise<Transport | null> | null = null
 
 function ambilTransport(): Promise<Transport | null> {
-  transport ??= ADMIN_API_URL ? Promise.resolve(viaApi) : import.meta.env.DEV ? import('./devApi').then((m) => m.buatDevTransport()) : Promise.resolve(null)
+  transport ??= API_URL ? Promise.resolve(viaApi) : import.meta.env.DEV ? import('./devApi').then((m) => m.buatDevTransport()) : Promise.resolve(null)
   return transport
 }
 
-export const adminTersambung = Boolean(ADMIN_API_URL) || import.meta.env.DEV
+export const adminTersambung = Boolean(API_URL) || import.meta.env.DEV
 
 export async function panggil<T = unknown>(pin: string, action: Aksi, data?: unknown): Promise<{ hasil: T; data: LeagueData }> {
   const kirim = await ambilTransport()

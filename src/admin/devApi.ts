@@ -10,7 +10,7 @@ const NAMA_TAB = { pemain: 'Pemain', sesi: 'Sesi', statistik: 'Statistik', laga:
 export async function buatDevTransport() {
   const isi: Record<string, string[][]> = {}
   for (const t of TABEL) isi[NAMA_TAB[t]] = Papa.parse<string[]>(await SAMPLE[t](), { skipEmptyLines: 'greedy' }).data
-  const doPost = muatScript(kode, buatGas(isi, { ADMIN_PIN: '1234' }).globals)
+  const { doPost } = muatScript(kode, buatGas(isi, { ADMIN_PIN: '1234' }).globals)
   return async (body: string) => {
     // jeda kecil meniru jaringan, supaya status "menyimpan" ikut teruji
     await new Promise((r) => setTimeout(r, 300))

@@ -6,6 +6,10 @@ Disetujui 2026-10-30. Melengkapi spec situs utama dan spec standing 4 tim.
 
 Admin bisa mengelola semua data rutin dari HP lewat `/admin`, tanpa membuka Google Sheets. Data yang dikelola: pemain, sesi beserta line-up tim, dan hasil sesi. Google Sheets tetap menjadi satu-satunya sumber data.
 
+## Revisi 2026-10-30: baca publik lewat Apps Script
+
+Atas persetujuan pemilik, web publik juga membaca data lewat Apps Script (`doGet`, tanpa PIN, di-cache 1 menit dan dikosongkan setiap kali admin menyimpan). Langkah *Publish to web* tidak diperlukan lagi; link CSV hanya menjadi cadangan. Ada juga aksi `pasang` yang hanya bisa dipakai selama `ADMIN_PIN` belum diatur: aksi ini menyiapkan semua tab, mengisi Poin default, dan menyimpan PIN. Project Apps Script dibuat dan di-deploy dengan clasp. Izinnya dibatasi ke `spreadsheets.currentonly`.
+
 ## Arsitektur
 
 - **API admin:** `apps-script/Code.gs`, sebuah Google Apps Script yang menempel di file Sheet, di-deploy sebagai Web app (*Execute as: Me*, *Who has access: Anyone*).

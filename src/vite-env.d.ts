@@ -6,5 +6,5 @@ interface ImportMetaEnv {
   readonly VITE_SHEET_STATISTIK_URL?: string
   readonly VITE_SHEET_LAGA_URL?: string
   readonly VITE_SHEET_POIN_URL?: string
-  readonly VITE_ADMIN_API_URL?: string
+  readonly VITE_API_URL?: string
 }
