@@ -109,8 +109,21 @@ h1, h2, h3 { margin: 0; font-weight: 400; }
 .c-name a { font-weight: 600; }
 .c-name a:hover { color: var(--gold); }
 .c-pos { margin-left: 6px; color: var(--mute); font-size: 9px; font-weight: 700; letter-spacing: 0.2em; }
-.hasil { font-family: var(--font-display); font-size: 18px; }
-.hasil-M { color: var(--gold); } .hasil-K { color: var(--mute); }
+.c-sub { display: block; margin-top: 2px; color: var(--mute); font-size: 12px; }
+
+/* standing */
+.latest .table-scroll { margin-top: 6px; }
+.standing .c-name { background: var(--panel); }
+.block .standing .c-name { background: var(--bg); }
+.st-tim { font-weight: 600; }
+.st-poin { font-weight: 700; }
+.standing tr.juara .st-tim, .standing tr.juara .st-poin, .standing tr.juara .c-rank { color: var(--gold); }
+@media (max-width: 560px) { .standing .c-opt { display: none; } .standing th, .standing td, .rapat th, .rapat td { padding: 9px 7px; } }
+.laga-list { border-top: 1px solid var(--line); }
+.laga-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--mute); }
+.laga-row .laga-tim:first-child { text-align: right; }
+.laga-tim.win { color: var(--ink); font-weight: 700; }
+.laga-skor { min-width: 56px; text-align: center; font-size: 26px; color: var(--ink); }
 
 /* players grid */
 .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }

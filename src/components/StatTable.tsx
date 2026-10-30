@@ -9,8 +9,8 @@ const KOLOM: { key: StatKey; label: string; title: string }[] = [
   { key: 'gol', label: 'Gol', title: 'Gol' },
   { key: 'assist', label: 'Ast', title: 'Assist' },
   { key: 'motm', label: 'MOTM', title: 'Man of the match' },
-  { key: 'menang', label: 'M-S-K', title: 'Menang-seri-kalah' },
-  { key: 'winRate', label: 'Win%', title: 'Persentase menang' },
+  { key: 'menang', label: 'M-S-K', title: 'Menang-seri-kalah per laga' },
+  { key: 'winRate', label: 'Win%', title: 'Persentase menang per laga' },
   { key: 'poinPerSesi', label: 'Poin/S', title: 'Rata-rata poin per sesi' },
 ]
 

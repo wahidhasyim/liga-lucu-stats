@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { parseLeague, toCount, toIsoDate } from './parse'
+import { kunciTim, parseLeague, toCount, toIsoDate } from './parse'
 import type { RawTables } from './types'
 
 const raw = (over: Partial<RawTables> = {}): RawTables => ({
@@ -13,6 +13,7 @@ const raw = (over: Partial<RawTables> = {}): RawTables => ({
     { sesi_id: 'S001', tanggal: '03/10/2026', lokasi: 'A', catatan: 'hujan' },
   ],
   statistik: [{ sesi_id: 'S001', pemain_id: 'P01', hasil: 'm', gol: '2', assist: '', motm: '1' }],
+  laga: [],
   poin: [
     { aksi: 'Gol', poin: '3' },
     { aksi: 'motm', poin: '2,5' },
@@ -71,7 +72,7 @@ describe('parseLeague', () => {
 
   it('parses statistik rows', () => {
     const { statistik } = parseLeague(raw())
-    expect(statistik).toEqual([{ sesiId: 'S001', pemainId: 'P01', hasil: 'M', gol: 2, assist: 0, motm: true }])
+    expect(statistik).toEqual([{ sesiId: 'S001', pemainId: 'P01', tim: '', menang: 1, seri: 0, kalah: 0, gol: 2, assist: 0, motm: true }])
   })
 
   it('skips statistik rows with unknown ids and warns', () => {
@@ -90,10 +91,56 @@ describe('parseLeague', () => {
 
   it('keeps rows with invalid hasil as hasil null', () => {
     const { statistik } = parseLeague(raw({ statistik: [{ sesi_id: 'S001', pemain_id: 'P01', hasil: 'menang' }] }))
-    expect(statistik[0]).toMatchObject({ hasil: null, gol: 0, assist: 0, motm: false })
+    expect(statistik[0]).toMatchObject({ menang: 0, seri: 0, kalah: 0, gol: 0, assist: 0, motm: false })
   })
 
   it('parses poin case-insensitively with comma decimals, dropping invalid numbers', () => {
     expect(parseLeague(raw()).poin).toEqual({ gol: 3, motm: 2.5 })
+  })
+
+  it('parses laga, skipping unplayed, unknown-sesi and nameless rows', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { laga } = parseLeague(
+      raw({
+        laga: [
+          { sesi_id: 'S001', tim_a: ' Tim  Budi ', skor_a: '2', skor_b: '1', tim_b: 'Galacticos' },
+          { sesi_id: 'S001', tim_a: 'Tim Budi', skor_a: '', skor_b: '', tim_b: 'Los Lucu' },
+          { sesi_id: 'S404', tim_a: 'A', skor_a: '1', skor_b: '0', tim_b: 'B' },
+          { sesi_id: 'S001', tim_a: '', skor_a: '1', skor_b: '0', tim_b: 'B' },
+          { sesi_id: 'S001', tim_a: 'A', skor_a: 'dua', skor_b: '0', tim_b: 'B' },
+        ],
+      }),
+    )
+    expect(laga).toEqual([{ sesiId: 'S001', timA: 'Tim Budi', skorA: 2, skorB: 1, timB: 'Galacticos' }])
+    expect(warn).toHaveBeenCalledTimes(3)
+  })
+
+  it('derives menang/seri/kalah per laga from the player team, ignoring hasil', () => {
+    const { statistik } = parseLeague(
+      raw({
+        statistik: [
+          { sesi_id: 'S001', pemain_id: 'P01', tim: 'tim budi', hasil: 'K' },
+          { sesi_id: 'S001', pemain_id: 'P02', tim: '', hasil: 'M' },
+          { sesi_id: 'S002', pemain_id: 'P01', tim: 'Tim Budi', hasil: 'S' },
+        ],
+        laga: [
+          { sesi_id: 'S001', tim_a: 'Tim Budi', skor_a: '2', skor_b: '1', tim_b: 'Galacticos' },
+          { sesi_id: 'S001', tim_a: 'Los Lucu', skor_a: '1', skor_b: '1', tim_b: 'Tim Budi' },
+          { sesi_id: 'S001', tim_a: 'Galacticos', skor_a: '3', skor_b: '0', tim_b: 'Los Lucu' },
+        ],
+      }),
+    )
+    expect(statistik.map((b) => [b.pemainId, b.sesiId, b.tim, b.menang, b.seri, b.kalah])).toEqual([
+      ['P01', 'S001', 'tim budi', 1, 1, 0],
+      ['P02', 'S001', '', 0, 0, 0],
+      // S002 tanpa laga: kolom hasil tetap dipakai
+      ['P01', 'S002', 'Tim Budi', 0, 1, 0],
+    ])
+  })
+})
+
+describe('kunciTim', () => {
+  it('ignores case and extra spaces', () => {
+    expect(kunciTim('  Tim   Budi ')).toBe('tim budi')
   })
 })

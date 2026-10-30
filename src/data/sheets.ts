@@ -3,22 +3,27 @@ import { parseLeague } from './parse'
 import type { LeagueData, RawTables, Row } from './types'
 
 type Tabel = keyof RawTables
-const TABEL: Tabel[] = ['pemain', 'sesi', 'statistik', 'poin']
+const TABEL: Tabel[] = ['pemain', 'sesi', 'statistik', 'laga', 'poin']
 
 const SHEET_URLS: Record<Tabel, string | undefined> = {
   pemain: import.meta.env.VITE_SHEET_PEMAIN_URL,
   sesi: import.meta.env.VITE_SHEET_SESI_URL,
   statistik: import.meta.env.VITE_SHEET_STATISTIK_URL,
+  laga: import.meta.env.VITE_SHEET_LAGA_URL,
   poin: import.meta.env.VITE_SHEET_POIN_URL,
 }
 
-// Dipakai saat env var belum diisi, supaya web bisa dicoba tanpa Google Sheets.
+// Dipakai saat semua env var kosong, supaya web bisa dicoba tanpa Google Sheets.
 const SAMPLE: Record<Tabel, () => Promise<string>> = {
   pemain: () => import('../../sheet-template/Pemain.csv?raw').then((m) => m.default),
   sesi: () => import('../../sheet-template/Sesi.csv?raw').then((m) => m.default),
   statistik: () => import('../../sheet-template/Statistik.csv?raw').then((m) => m.default),
+  laga: () => import('../../sheet-template/Laga.csv?raw').then((m) => m.default),
   poin: () => import('../../sheet-template/Poin.csv?raw').then((m) => m.default),
 }
+
+// Data contoh tidak pernah dicampur dengan data asli.
+const PAKAI_CONTOH = TABEL.every((t) => !SHEET_URLS[t])
 
 export function parseCsv(text: string): Row[] {
   return Papa.parse<Row>(text, {
@@ -30,7 +35,10 @@ export function parseCsv(text: string): Row[] {
 
 async function loadText(tabel: Tabel): Promise<string> {
   const url = SHEET_URLS[tabel]
-  if (!url) return SAMPLE[tabel]()
+  if (PAKAI_CONTOH) return SAMPLE[tabel]()
+  // Tab Laga opsional: tanpa laga, M/S/K pemain diambil dari kolom hasil.
+  if (!url && tabel === 'laga') return ''
+  if (!url) throw new Error(`Link tab ${tabel} belum diisi (VITE_SHEET_${tabel.toUpperCase()}_URL).`)
   const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) throw new Error(`Gagal memuat tab ${tabel} (HTTP ${res.status})`)
   const text = await res.text()
@@ -40,6 +48,6 @@ async function loadText(tabel: Tabel): Promise<string> {
 }
 
 export async function loadLeague(): Promise<LeagueData> {
-  const [pemain, sesi, statistik, poin] = (await Promise.all(TABEL.map(loadText))).map(parseCsv)
-  return parseLeague({ pemain, sesi, statistik, poin })
+  const [pemain, sesi, statistik, laga, poin] = (await Promise.all(TABEL.map(loadText))).map(parseCsv)
+  return parseLeague({ pemain, sesi, statistik, laga, poin })
 }

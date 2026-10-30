@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import type { BarisStat, Hasil, LeagueData, Pemain, Sesi } from '../data/types'
-import { barisSesi, compareDefault, computePlayerStats, isStatKey, poinBaris, riwayatPemain, ringkasan, sortBy, type PlayerStats } from './compute'
+import type { BarisStat, Hasil, Laga, LeagueData, Pemain, Sesi } from '../data/types'
+import { barisSesi, compareDefault, computePlayerStats, isStatKey, poinBaris, riwayatPemain, ringkasan, sortBy, standingSesi, type PlayerStats } from './compute'
 
 const pemain = (id: string, nama: string, aktif = true): Pemain => ({ id, nama, panggilan: nama, posisi: 'MID', fotoUrl: '', aktif })
 const sesi = (id: string, tanggal: string, pekan: number): Sesi => ({ id, tanggal, lokasi: '', catatan: '', pekan })
 const baris = (sesiId: string, pemainId: string, hasil: Hasil | null, gol = 0, assist = 0, motm = false): BarisStat => ({
   sesiId,
   pemainId,
-  hasil,
+  tim: '',
+  menang: hasil === 'M' ? 1 : 0,
+  seri: hasil === 'S' ? 1 : 0,
+  kalah: hasil === 'K' ? 1 : 0,
   gol,
   assist,
   motm,
@@ -26,6 +29,7 @@ const data: LeagueData = {
     baris('S2', 'B', 'S', 1, 1, true), // 1+3+2+5+1 = 12
     baris('S2', 'C', 'M', 1), // 1+3+2 = 6
   ],
+  laga: [],
   poin: POIN,
 }
 
@@ -51,6 +55,9 @@ describe('poinBaris', () => {
   it('applies the poin table', () => {
     expect(poinBaris(baris('S1', 'A', 'M', 2, 0, true), POIN)).toBe(14)
   })
+  it('counts menang/seri/kalah per laga', () => {
+    expect(poinBaris({ ...baris('S1', 'A', null), menang: 2, seri: 1, kalah: 1 }, { menang: 1, seri: 0.5, kalah: -1 })).toBe(1.5)
+  })
   it('treats missing actions as 0 and supports a kalah action', () => {
     expect(poinBaris(baris('S1', 'A', 'K', 3), {})).toBe(0)
     expect(poinBaris(baris('S1', 'A', 'K'), { kalah: -1 })).toBe(-1)
@@ -71,6 +78,11 @@ describe('computePlayerStats', () => {
 
   it('ranks only active players who played', () => {
     expect(all.map((s) => s.peringkat)).toEqual([1, 2, 3, null, null])
+  })
+
+  it('computes win rate per laga', () => {
+    const perLaga = computePlayerStats({ ...data, statistik: [{ ...baris('S1', 'A', null), menang: 2, seri: 1, kalah: 1 }] }, 'semua', TODAY)
+    expect(perLaga.find((s) => s.pemain.id === 'A')).toMatchObject({ hadir: 1, menang: 2, seri: 1, kalah: 1, winRate: 0.5 })
   })
 
   it('gives zero rates to players without sessions', () => {
@@ -108,9 +120,9 @@ describe('compareDefault / sortBy', () => {
 
 describe('riwayatPemain', () => {
   it('lists sessions in pekan order with poin', () => {
-    expect(riwayatPemain(data, 'A').map((r) => [r.sesi.pekan, r.poin, r.hasil])).toEqual([
-      [1, 14, 'M'],
-      [2, 2, 'S'],
+    expect(riwayatPemain(data, 'A').map((r) => [r.sesi.pekan, r.poin, `${r.menang}-${r.seri}-${r.kalah}`])).toEqual([
+      [1, 14, '1-0-0'],
+      [2, 2, '0-1-0'],
     ])
   })
 })
@@ -128,5 +140,38 @@ describe('barisSesi', () => {
 describe('ringkasan', () => {
   it('summarizes the community', () => {
     expect(ringkasan(data)).toEqual({ totalSesi: 2, totalGol: 5, pemainAktif: 4 })
+  })
+})
+
+describe('standingSesi', () => {
+  const laga = (timA: string, skorA: number, skorB: number, timB: string): Laga => ({ sesiId: 'S1', timA, skorA, skorB, timB })
+
+  it('builds the table with 3-1-0 points', () => {
+    const tabel = standingSesi([laga('Merah', 2, 1, 'Biru'), laga('Kuning', 0, 0, 'Hijau'), laga('Merah', 1, 1, 'Kuning'), laga('Biru', 3, 0, 'Hijau')])
+    expect(tabel[0]).toEqual({ tim: 'Merah', main: 2, menang: 1, seri: 1, kalah: 0, golMasuk: 3, kemasukan: 2, selisih: 1, poin: 4 })
+    expect(tabel.map((t) => [t.tim, t.poin])).toEqual([
+      ['Merah', 4],
+      ['Biru', 3],
+      ['Kuning', 2],
+      ['Hijau', 1],
+    ])
+  })
+
+  it('merges team names case-insensitively, keeping the first spelling', () => {
+    const tabel = standingSesi([laga('Tim Budi', 1, 0, 'Galacticos'), laga('tim budi', 2, 2, 'GALACTICOS')])
+    expect(tabel.map((t) => [t.tim, t.main, t.poin])).toEqual([
+      ['Tim Budi', 2, 4],
+      ['Galacticos', 2, 1],
+    ])
+  })
+
+  it('breaks ties by selisih, then gol masuk, then nama', () => {
+    // semua 3 poin. B & A selisih +3 (B lebih banyak gol); X, C, D selisih +1 (X 10 gol); C & D sama persis → abjad
+    const tabel = standingSesi([laga('A', 3, 0, 'X'), laga('B', 4, 1, 'X'), laga('D', 1, 0, 'X'), laga('C', 1, 0, 'X'), laga('X', 9, 0, 'Y')])
+    expect(tabel.filter((t) => t.poin === 3).map((t) => t.tim)).toEqual(['B', 'A', 'X', 'C', 'D'])
+  })
+
+  it('is empty without laga', () => {
+    expect(standingSesi([])).toEqual([])
   })
 })

@@ -110,11 +110,11 @@ export default function PlayerProfile() {
               <h2 className="disp">Riwayat sesi</h2>
             </div>
             <div className="table-scroll">
-              <table className="stat-table">
+              <table className="stat-table rapat">
                 <thead>
                   <tr>
                     <th className="c-name">Sesi</th>
-                    <th>Hasil</th>
+                    <th title="Menang-seri-kalah per laga">M-S-K</th>
                     <th>Gol</th>
                     <th>Ast</th>
                     <th>Poin</th>
@@ -125,10 +125,10 @@ export default function PlayerProfile() {
                     <tr key={r.sesi.id}>
                       <td className="c-name">
                         <Link to={`/sesi/${r.sesi.id}`}>Pekan {r.sesi.pekan}</Link>
-                        <span className="c-pos">{formatTanggalPendek(r.sesi.tanggal)}</span>
                         {r.motm && <span className="badge-motm">MOTM</span>}
+                        <span className="c-sub">{[formatTanggalPendek(r.sesi.tanggal), r.tim].filter(Boolean).join(' · ')}</span>
                       </td>
-                      <td>{r.hasil ? <span className={`hasil hasil-${r.hasil}`}>{r.hasil}</span> : '–'}</td>
+                      <td>{r.menang + r.seri + r.kalah > 0 ? `${r.menang}-${r.seri}-${r.kalah}` : '–'}</td>
                       <td>{r.gol}</td>
                       <td>{r.assist}</td>
                       <td>{formatAngka(r.poin)}</td>

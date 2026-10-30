@@ -1,33 +1,49 @@
-sesi_id,pemain_id,hasil,gol,assist,motm
-S001,P01,M,2,0,1
-S001,P02,M,0,2,0
-S001,P05,M,0,0,0
-S001,P07,M,0,0,0
-S001,P03,K,1,0,0
-S001,P04,K,0,1,0
-S001,P06,K,0,0,0
-S001,P10,K,1,0,0
-S002,P01,S,1,0,0
-S002,P03,S,0,1,0
-S002,P04,S,0,0,0
-S002,P09,S,0,0,0
-S002,P02,S,1,1,1
-S002,P06,S,0,0,0
-S002,P07,S,0,0,0
-S002,P08,S,0,0,0
-S003,P02,M,1,1,0
-S003,P03,M,2,0,1
-S003,P06,M,0,1,0
-S003,P09,M,0,0,0
-S003,P01,K,1,0,0
-S003,P04,K,0,0,0
-S003,P05,K,0,0,0
-S003,P08,K,0,1,0
-S004,P01,M,3,0,1
-S004,P04,M,0,1,0
-S004,P06,M,0,1,0
-S004,P08,M,0,0,0
-S004,P02,K,0,1,0
-S004,P03,K,1,0,0
-S004,P05,K,0,0,0
-S004,P07,K,0,0,0
+sesi_id,pemain_id,tim,hasil,gol,assist,motm
+S001,P01,,M,2,0,1
+S001,P02,,M,0,2,0
+S001,P05,,M,0,0,0
+S001,P07,,M,0,0,0
+S001,P03,,K,1,0,0
+S001,P04,,K,0,1,0
+S001,P06,,K,0,0,0
+S001,P10,,K,1,0,0
+S002,P01,,S,1,0,0
+S002,P03,,S,0,1,0
+S002,P04,,S,0,0,0
+S002,P09,,S,0,0,0
+S002,P02,,S,1,1,1
+S002,P06,,S,0,0,0
+S002,P07,,S,0,0,0
+S002,P08,,S,0,0,0
+S003,P03,Tim Dimas,,2,0,1
+S003,P02,Tim Dimas,,1,1,0
+S003,P06,Tim Dimas,,1,1,0
+S003,P09,Tim Dimas,,0,0,0
+S003,P01,Hujan FC,,2,0,0
+S003,P12,Hujan FC,,1,0,0
+S003,P04,Hujan FC,,0,1,0
+S003,P05,Hujan FC,,0,0,0
+S003,P08,Becek United,,1,1,0
+S003,P13,Becek United,,1,0,0
+S003,P11,Becek United,,0,0,0
+S003,P15,Becek United,,0,0,0
+S003,P17,Payung Teduh,,2,0,0
+S003,P16,Payung Teduh,,1,1,0
+S003,P07,Payung Teduh,,1,0,0
+S003,P14,Payung Teduh,,0,1,0
+S004,P01,Tim Budi,,3,0,1
+S004,P06,Tim Budi,,2,2,0
+S004,P04,Tim Budi,,1,1,0
+S004,P15,Tim Budi,,0,0,0
+S004,P03,Kampung FC,,2,1,0
+S004,P13,Kampung FC,,2,1,0
+S004,P11,Kampung FC,,1,1,0
+S004,P09,Kampung FC,,0,0,0
+S004,P02,Galacticos,,1,2,0
+S004,P12,Galacticos,,2,0,0
+S004,P07,Galacticos,,1,0,0
+S004,P05,Galacticos,,0,0,0
+S004,P08,Los Lucu,,1,0,0
+S004,P17,Los Lucu,,1,1,0
+S004,P14,Los Lucu,,0,0,0
+S004,P16,Los Lucu,,0,1,0

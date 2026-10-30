@@ -1,0 +1,13 @@
+sesi_id,tim_a,skor_a,skor_b,tim_b
+S003,Tim Dimas,2,0,Hujan FC
+S003,Becek United,1,1,Payung Teduh
+S003,Tim Dimas,1,0,Becek United
+S003,Hujan FC,3,2,Payung Teduh
+S003,Tim Dimas,1,1,Payung Teduh
+S003,Hujan FC,0,1,Becek United
+S004,Tim Budi,3,1,Galacticos
+S004,Kampung FC,2,2,Los Lucu
+S004,Tim Budi,1,1,Kampung FC
+S004,Galacticos,2,0,Los Lucu
+S004,Tim Budi,2,0,Los Lucu
+S004,Galacticos,1,2,Kampung FC

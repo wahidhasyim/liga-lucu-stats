@@ -2,10 +2,11 @@ import { Link } from 'react-router-dom'
 import { useLeague } from '../components/Layout'
 import { Leaderboard } from '../components/Leaderboard'
 import { PlayerPhoto } from '../components/PlayerPhoto'
+import { StandingTable } from '../components/StandingTable'
 import { EmptyState } from '../components/StatusStates'
 import type { LeagueData, Sesi } from '../data/types'
 import { formatTanggal } from '../lib/format'
-import { barisSesi, computePlayerStats, ringkasan, sortBy, type StatKey } from '../stats/compute'
+import { barisSesi, computePlayerStats, lagaSesi, ringkasan, sortBy, standingSesi, type StatKey } from '../stats/compute'
 
 const BOARDS: { judul: string; key: StatKey }[] = [
   { judul: 'Rating pemain', key: 'rating' },
@@ -18,6 +19,7 @@ function SesiTerakhir({ data, sesi }: { data: LeagueData; sesi: Sesi }) {
   const baris = barisSesi(data, sesi.id)
   const motm = baris.filter((b) => b.baris.motm)
   const pencetak = baris.filter((b) => b.baris.gol > 0).sort((a, b) => b.baris.gol - a.baris.gol)
+  const standing = standingSesi(lagaSesi(data, sesi.id))
   return (
     <section className="latest">
       <div className="sec-head">
@@ -49,6 +51,12 @@ function SesiTerakhir({ data, sesi }: { data: LeagueData; sesi: Sesi }) {
               </Link>
             ))}
           </div>
+        </div>
+      )}
+      {standing.length > 0 && (
+        <div>
+          <div className="lbl mute">Klasemen sesi</div>
+          <StandingTable rows={standing} />
         </div>
       )}
     </section>

@@ -25,10 +25,22 @@ export interface Sesi {
 export interface BarisStat {
   sesiId: string
   pemainId: string
-  hasil: Hasil | null
+  tim: string
+  // jumlah laga; dihitung dari tab Laga, atau dari kolom hasil (1 laga) bila sesi belum punya laga
+  menang: number
+  seri: number
+  kalah: number
   gol: number
   assist: number
   motm: boolean
+}
+
+export interface Laga {
+  sesiId: string
+  timA: string
+  skorA: number
+  skorB: number
+  timB: string
 }
 
 export type Poin = Record<string, number>
@@ -37,6 +49,7 @@ export interface LeagueData {
   pemain: Pemain[]
   sesi: Sesi[]
   statistik: BarisStat[]
+  laga: Laga[]
   poin: Poin
 }
 
@@ -44,5 +57,6 @@ export interface RawTables {
   pemain: Row[]
   sesi: Row[]
   statistik: Row[]
+  laga: Row[]
   poin: Row[]
 }

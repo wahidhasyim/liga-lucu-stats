@@ -1,4 +1,4 @@
-import { POSISI, type BarisStat, type Hasil, type LeagueData, type Pemain, type Poin, type Posisi, type RawTables, type Row, type Sesi } from './types'
+import { POSISI, type BarisStat, type Hasil, type Laga, type LeagueData, type Pemain, type Poin, type Posisi, type RawTables, type Row, type Sesi } from './types'
 
 const str = (v: string | undefined) => (v ?? '').trim()
 
@@ -18,6 +18,11 @@ export function toIsoDate(v: string | undefined): string | null {
   else return null
   if (m < 1 || m > 12 || d < 1 || d > 31) return null
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+}
+
+// Nama tim ditulis bebas oleh admin; kunci ini menyamakan "Tim Budi", "tim budi " dan "Tim  Budi".
+export function kunciTim(nama: string): string {
+  return nama.trim().replace(/\s+/g, ' ').toLowerCase()
 }
 
 function toBool(v: string | undefined, fallback: boolean): boolean {
@@ -67,7 +72,60 @@ function parseSesi(rows: Row[]): Sesi[] {
   return valid.map((s, i) => ({ ...s, pekan: i + 1 }))
 }
 
-function parseStatistik(rows: Row[], pemainIds: Set<string>, sesiIds: Set<string>): BarisStat[] {
+function parseLaga(rows: Row[], sesiIds: Set<string>): Laga[] {
+  const out: Laga[] = []
+  rows.forEach((r, i) => {
+    const sesiId = str(r.sesi_id)
+    const timA = str(r.tim_a).replace(/\s+/g, ' ')
+    const timB = str(r.tim_b).replace(/\s+/g, ' ')
+    if (!sesiId && !timA && !timB) return
+    if (!sesiIds.has(sesiId)) {
+      console.warn(`[laga] baris ${i + 2}: sesi "${sesiId}" tidak dikenal, dilewati`)
+      return
+    }
+    if (!timA || !timB) {
+      console.warn(`[laga] baris ${i + 2}: nama tim kosong, dilewati`)
+      return
+    }
+    // skor kosong = laga belum dimainkan
+    if (str(r.skor_a) === '' || str(r.skor_b) === '') return
+    const skorA = toSkor(r.skor_a)
+    const skorB = toSkor(r.skor_b)
+    if (skorA === null || skorB === null) {
+      console.warn(`[laga] baris ${i + 2}: skor "${str(r.skor_a)}-${str(r.skor_b)}" tidak valid, dilewati`)
+      return
+    }
+    out.push({ sesiId, timA, skorA, skorB, timB })
+  })
+  return out
+}
+
+function toSkor(v: string | undefined): number | null {
+  const s = str(v)
+  return /^\d+$/.test(s) ? Number(s) : null
+}
+
+type Rekap = Pick<BarisStat, 'menang' | 'seri' | 'kalah'>
+
+// Sesi dengan laga: hitung per laga yang dimainkan tim pemain. Sesi tanpa laga: kolom hasil = 1 laga.
+function rekapBaris(tim: string, hasil: Hasil | null, lagaSesi: Laga[]): Rekap {
+  if (lagaSesi.length === 0) return { menang: hasil === 'M' ? 1 : 0, seri: hasil === 'S' ? 1 : 0, kalah: hasil === 'K' ? 1 : 0 }
+  const rekap: Rekap = { menang: 0, seri: 0, kalah: 0 }
+  const kunci = kunciTim(tim)
+  if (!kunci) return rekap
+  for (const l of lagaSesi) {
+    const selisih = kunciTim(l.timA) === kunci ? l.skorA - l.skorB : kunciTim(l.timB) === kunci ? l.skorB - l.skorA : null
+    if (selisih === null) continue
+    if (selisih > 0) rekap.menang++
+    else if (selisih === 0) rekap.seri++
+    else rekap.kalah++
+  }
+  return rekap
+}
+
+function parseStatistik(rows: Row[], pemainIds: Set<string>, sesiIds: Set<string>, laga: Laga[]): BarisStat[] {
+  const lagaPerSesi = new Map<string, Laga[]>()
+  for (const l of laga) lagaPerSesi.set(l.sesiId, [...(lagaPerSesi.get(l.sesiId) ?? []), l])
   const out: BarisStat[] = []
   rows.forEach((r, i) => {
     const sesiId = str(r.sesi_id)
@@ -77,10 +135,12 @@ function parseStatistik(rows: Row[], pemainIds: Set<string>, sesiIds: Set<string
       console.warn(`[statistik] baris ${i + 2}: sesi "${sesiId}" / pemain "${pemainId}" tidak dikenal, dilewati`)
       return
     }
+    const tim = str(r.tim).replace(/\s+/g, ' ')
     out.push({
       sesiId,
       pemainId,
-      hasil: toHasil(r.hasil),
+      tim,
+      ...rekapBaris(tim, toHasil(r.hasil), lagaPerSesi.get(sesiId) ?? []),
       gol: toCount(r.gol),
       assist: toCount(r.assist),
       motm: toBool(r.motm, false),
@@ -102,6 +162,8 @@ function parsePoin(rows: Row[]): Poin {
 export function parseLeague(raw: RawTables): LeagueData {
   const pemain = parsePemain(raw.pemain)
   const sesi = parseSesi(raw.sesi)
-  const statistik = parseStatistik(raw.statistik, new Set(pemain.map((p) => p.id)), new Set(sesi.map((s) => s.id)))
-  return { pemain, sesi, statistik, poin: parsePoin(raw.poin) }
+  const sesiIds = new Set(sesi.map((s) => s.id))
+  const laga = parseLaga(raw.laga, sesiIds)
+  const statistik = parseStatistik(raw.statistik, new Set(pemain.map((p) => p.id)), sesiIds, laga)
+  return { pemain, sesi, statistik, laga, poin: parsePoin(raw.poin) }
 }
