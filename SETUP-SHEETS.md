@@ -15,7 +15,7 @@ Perubahan dari halaman admin langsung tersimpan ke sheet. Web publik ikut beruba
 
 Buka https://ligalucudepok.web.app/admin dari HP, lalu masukkan PIN.
 
-1. **Sebelum main, buka tab Sesi.** Pilih **+ Sesi baru**, lalu isi tanggal dan lokasi. Centang pemain yang hadir, lalu tekan **Acak seimbang** atau pilih tim A–D satu per satu. Nama tim bisa diganti sesukamu. Setelah itu tekan **Buat sesi**.
+1. **Sebelum main, buka tab Sesi.** Pilih **+ Sesi baru**, lalu isi tanggal dan lokasi. Atur jumlah tim dengan **+ Tambah tim** atau ✕ (2–8 tim), dan beri nama tim sesukamu. Centang pemain yang hadir. Pemain yang belum terdaftar cukup diketik namanya, pilih posisinya, lalu tekan **+ Tambah**; saat sesi disimpan, pemain itu otomatis masuk daftar pemain. Tekan **Acak tim seimbang** atau pilih tim tiap pemain satu per satu, lalu tekan **Buat sesi**.
 2. **Setelah main, buka tab Hasil.** Isi skor tiap laga. Laga yang tidak jadi dimainkan bisa dihapus dengan ✕. Isi gol dan assist tiap pemain dengan tombol −/+, pilih MOTM dengan ★, lalu tekan **Simpan hasil**.
 3. **Ada anggota baru? Buka tab Pemain** dan tekan **+ Tambah pemain**. Anggota yang sudah tidak ikut bisa dinonaktifkan; riwayatnya tetap tersimpan.
 

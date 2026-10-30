@@ -94,7 +94,7 @@ describe('Code.gs: simpanSesi', () => {
   it('creates a session with a lineup', () => {
     const { kirim, grid } = siapkan()
     const res = kirim('simpanSesi', { tanggal: '2026-10-31', lokasi: 'Margonda', catatan: '', lineup })
-    expect(res.hasil).toEqual({ id: 'S002' })
+    expect(res.hasil).toEqual({ id: 'S002', pemainBaru: [] })
     expect(res.data.statistik.filter((r: { sesi_id: string }) => r.sesi_id === 'S002')).toEqual([
       { sesi_id: 'S002', pemain_id: 'P01', hasil: '', gol: '0', assist: '0', motm: '0', tim: 'Tim Budi' },
       { sesi_id: 'S002', pemain_id: 'P02', hasil: '', gol: '0', assist: '0', motm: '0', tim: 'Galacticos' },
@@ -115,6 +115,36 @@ describe('Code.gs: simpanSesi', () => {
     expect(res.data.sesi).toEqual([{ sesi_id: 'S001', tanggal: '2026-10-24', lokasi: 'Cibinong', catatan: 'hujan' }])
     expect(res.data.statistik.find((r: { pemain_id: string }) => r.pemain_id === 'P01')).toMatchObject({ gol: '2', motm: '1', hasil: 'M', tim: 'Tim Budi' })
     expect(res.data.laga).toEqual([{ sesi_id: 'S001', tim_a: 'Tim Budi', skor_a: '2', skor_b: '1', tim_b: 'Galacticos' }])
+  })
+
+  it('registers new players from the lineup in the same save', () => {
+    const { kirim } = siapkan()
+    const res = kirim('simpanSesi', {
+      tanggal: '2026-10-31',
+      lineup: [
+        { pemainId: 'P01', tim: 'Tim A' },
+        { baru: { nama: ' Kevin  Ardiansyah ', posisi: 'fwd' }, tim: 'Tim B' },
+        { baru: { nama: 'Johan', posisi: '' }, tim: 'Tim B' },
+      ],
+    })
+    expect(res.hasil).toEqual({ id: 'S002', pemainBaru: ['P10', 'P11'] })
+    expect(res.data.pemain.slice(-2)).toEqual([
+      { id: 'P10', nama: 'Kevin Ardiansyah', panggilan: '', posisi: 'FWD', foto_url: '', aktif: 'TRUE' },
+      { id: 'P11', nama: 'Johan', panggilan: '', posisi: 'MID', foto_url: '', aktif: 'TRUE' },
+    ])
+    expect(res.data.statistik.filter((r: { sesi_id: string }) => r.sesi_id === 'S002').map((r: Record<string, string>) => [r.pemain_id, r.tim])).toEqual([
+      ['P01', 'Tim A'],
+      ['P10', 'Tim B'],
+      ['P11', 'Tim B'],
+    ])
+  })
+
+  it('saves nothing when a new player is invalid', () => {
+    const { kirim, grid } = siapkan()
+    const res = kirim('simpanSesi', { tanggal: '2026-10-31', lineup: [{ baru: { nama: 'Ok', posisi: 'MID' }, tim: 'A' }, { baru: { nama: ' ' }, tim: 'A' }] })
+    expect(res.error).toMatch(/Nama pemain baru/)
+    expect(grid('Pemain')).toHaveLength(4)
+    expect(grid('Sesi')).toHaveLength(2)
   })
 
   it('validates date, lineup and players', () => {

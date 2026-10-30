@@ -143,10 +143,21 @@ const AKSI = {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) throw new Error('Tanggal sesi wajib diisi.')
     const lineup = Array.isArray(d.lineup) ? d.lineup : []
     if (lineup.length === 0) throw new Error('Pilih minimal satu pemain yang hadir.')
-    const pemainIds = tabel('pemain').rows.map((r) => r.id)
+    // Pemain baru dari form sesi ({ baru: { nama, posisi } }) didaftarkan ke tab Pemain sekaligus.
+    const pemain = tabel('pemain')
+    const pemainBaru = []
     lineup.forEach((l) => {
-      if (pemainIds.indexOf(l.pemainId) < 0) throw new Error(`Pemain ${l.pemainId} tidak dikenal.`)
       if (!teks(l.tim)) throw new Error('Semua pemain yang hadir harus punya tim.')
+      if (l.baru) {
+        const nama = teks(l.baru.nama)
+        if (!nama) throw new Error('Nama pemain baru wajib diisi.')
+        const posisi = teks(l.baru.posisi).toUpperCase()
+        l.pemainId = idBaru('P', pemain.rows.map((r) => r.id), 2)
+        pemain.rows.push({ id: l.pemainId, nama, panggilan: '', posisi: POSISI.indexOf(posisi) >= 0 ? posisi : 'MID', foto_url: '', aktif: 'TRUE' })
+        pemainBaru.push(l.pemainId)
+      } else if (!pemain.rows.some((r) => r.id === l.pemainId)) {
+        throw new Error(`Pemain ${l.pemainId} tidak dikenal.`)
+      }
     })
 
     const sesi = tabel('sesi')
@@ -174,10 +185,11 @@ const AKSI = {
     const laga = tabel('laga')
     laga.rows = laga.rows.filter((r) => r.sesi_id !== id || (timAda.indexOf(kunciTim(r.tim_a)) >= 0 && timAda.indexOf(kunciTim(r.tim_b)) >= 0))
 
+    if (pemainBaru.length) tulis(pemain)
     tulis(sesi)
     tulis(stat)
     tulis(laga)
-    return { id }
+    return { id, pemainBaru }
   },
 
   simpanHasil(d) {

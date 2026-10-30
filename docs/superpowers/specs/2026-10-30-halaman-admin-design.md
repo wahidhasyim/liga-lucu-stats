@@ -10,6 +10,11 @@ Admin bisa mengelola semua data rutin dari HP lewat `/admin`, tanpa membuka Goog
 
 Atas persetujuan pemilik, web publik juga membaca data lewat Apps Script (`doGet`, tanpa PIN, di-cache 1 menit dan dikosongkan setiap kali admin menyimpan). Langkah *Publish to web* tidak diperlukan lagi; link CSV hanya menjadi cadangan. Ada juga aksi `pasang` yang hanya bisa dipakai selama `ADMIN_PIN` belum diatur: aksi ini menyiapkan semua tab, mengisi Poin default, dan menyimpan PIN. Project Apps Script dibuat dan di-deploy dengan clasp. Izinnya dibatasi ke `spreadsheets.currentonly`.
 
+## Revisi 2026-10-30: form sesi
+
+- Jumlah tim bisa diatur 2–8 dengan tombol tambah/hapus tim. Pemain di tim yang dihapus jadi belum dapat tim. Kalau timnya lebih dari 4, pilihan tim tiap pemain memakai dropdown.
+- Pemain baru bisa diketik langsung di form sesi (nama dan posisi). Di `simpanSesi`, entri line-up `{ baru: { nama, posisi }, tim }` mendaftarkan pemain itu ke tab Pemain dalam penyimpanan yang sama. Kalau ada data yang tidak valid, tidak ada yang tersimpan. Pengecekan nama kembar dilakukan di browser lewat konfirmasi.
+
 ## Arsitektur
 
 - **API admin:** `apps-script/Code.gs`, sebuah Google Apps Script yang menempel di file Sheet, di-deploy sebagai Web app (*Execute as: Me*, *Who has access: Anyone*).

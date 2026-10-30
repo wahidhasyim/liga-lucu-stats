@@ -216,12 +216,18 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .adm-teams { display: grid; gap: 8px; }
 @media (min-width: 640px) { .adm-teams { grid-template-columns: 1fr 1fr; } }
-.adm-team { display: grid; grid-template-columns: 32px 1fr 28px; gap: 10px; align-items: center; }
+.adm-team { display: grid; grid-template-columns: 32px 1fr 22px 32px; gap: 8px; align-items: center; }
 .adm-team .lbl { text-align: right; }
 .team-tag { display: grid; place-items: center; width: 32px; height: 32px; background: var(--gold); color: var(--bg); font-family: var(--font-display); font-size: 20px; }
 .adm-acak { width: 100%; margin: 12px 0 8px; }
+.adm-card .adm-acak { margin-bottom: 0; }
+.adm-newplayer { display: grid; grid-template-columns: 1fr 84px auto; gap: 8px; margin-top: 14px; }
+.adm-newplayer .input { min-width: 0; }
+.adm-newplayer .btn { padding: 10px 12px; white-space: nowrap; letter-spacing: 0.12em; }
+.badge-baru { flex-shrink: 0; padding: 1px 6px; border: 1px solid var(--gold); color: var(--gold); font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
+.tim-select { width: 104px; flex-shrink: 0; min-height: 38px; padding: 6px 28px 6px 10px; font-size: 14px; }
 .adm-list { display: grid; }
-.adm-line { display: flex; align-items: center; gap: 8px; min-height: 52px; border-bottom: 1px solid var(--line); }
+.adm-line { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 52px; border-bottom: 1px solid var(--line); }
 .adm-toggle { display: flex; flex: 1; align-items: center; gap: 12px; min-width: 0; min-height: 52px; padding: 0; border: 0; background: none; color: var(--mute); text-align: left; cursor: pointer; font-size: 14px; }
 .adm-line.on .adm-toggle { color: var(--ink); font-weight: 600; }
 .tick { display: grid; place-items: center; flex-shrink: 0; width: 24px; height: 24px; border: 1px solid var(--line); color: var(--bg); font-size: 15px; font-weight: 700; }

@@ -53,4 +53,4 @@ export function SaveBar({ status, children }: { status: Status; children: ReactN
   )
 }
 
-export const HURUF_TIM = ['A', 'B', 'C', 'D']
+export const HURUF_TIM = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
