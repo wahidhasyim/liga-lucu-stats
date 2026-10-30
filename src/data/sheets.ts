@@ -1,20 +1,13 @@
 import Papa from 'papaparse'
+import { SHEET_URLS } from '../config'
 import { parseLeague } from './parse'
 import type { LeagueData, RawTables, Row } from './types'
 
 type Tabel = keyof RawTables
-const TABEL: Tabel[] = ['pemain', 'sesi', 'statistik', 'laga', 'poin']
+export const TABEL: Tabel[] = ['pemain', 'sesi', 'statistik', 'laga', 'poin']
 
-const SHEET_URLS: Record<Tabel, string | undefined> = {
-  pemain: import.meta.env.VITE_SHEET_PEMAIN_URL,
-  sesi: import.meta.env.VITE_SHEET_SESI_URL,
-  statistik: import.meta.env.VITE_SHEET_STATISTIK_URL,
-  laga: import.meta.env.VITE_SHEET_LAGA_URL,
-  poin: import.meta.env.VITE_SHEET_POIN_URL,
-}
-
-// Dipakai saat semua env var kosong, supaya web bisa dicoba tanpa Google Sheets.
-const SAMPLE: Record<Tabel, () => Promise<string>> = {
+// Dipakai saat semua link kosong, supaya web bisa dicoba tanpa Google Sheets.
+export const SAMPLE: Record<Tabel, () => Promise<string>> = {
   pemain: () => import('../../sheet-template/Pemain.csv?raw').then((m) => m.default),
   sesi: () => import('../../sheet-template/Sesi.csv?raw').then((m) => m.default),
   statistik: () => import('../../sheet-template/Statistik.csv?raw').then((m) => m.default),

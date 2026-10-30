@@ -1,8 +1,9 @@
-import { StrictMode } from 'react'
+import { lazy, StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
-import { NotFound } from './components/StatusStates'
+import { Nav } from './components/Nav'
+import { LoadingState, NotFound } from './components/StatusStates'
 import { DataProvider } from './data/DataProvider'
 import { mulaiAnalytics } from './lib/analytics'
 import Home from './pages/Home'
@@ -11,6 +12,9 @@ import Players from './pages/Players'
 import SessionDetail from './pages/SessionDetail'
 import Sessions from './pages/Sessions'
 import Stats from './pages/Stats'
+
+// Halaman admin dimuat terpisah supaya tidak membebani pengunjung web publik.
+const AdminPage = lazy(() => import('./admin/AdminPage'))
 import './styles/tokens.css'
 import './styles/global.css'
 
@@ -22,6 +26,17 @@ createRoot(document.getElementById('root')!).render(
     <DataProvider>
       <BrowserRouter>
         <Routes>
+          <Route
+            path="admin"
+            element={
+              <>
+                <Nav />
+                <Suspense fallback={<LoadingState />}>
+                  <AdminPage />
+                </Suspense>
+              </>
+            }
+          />
           <Route element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="statistik" element={<Stats />} />

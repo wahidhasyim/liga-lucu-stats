@@ -5,7 +5,7 @@ import { PlayerPhoto } from '../components/PlayerPhoto'
 import { StandingTable } from '../components/StandingTable'
 import { EmptyState } from '../components/StatusStates'
 import type { LeagueData, Sesi } from '../data/types'
-import { formatTanggal } from '../lib/format'
+import { formatTanggal, isoHariIni } from '../lib/format'
 import { barisSesi, computePlayerStats, lagaSesi, ringkasan, sortBy, standingSesi, type StatKey } from '../stats/compute'
 
 const BOARDS: { judul: string; key: StatKey }[] = [
@@ -67,7 +67,9 @@ export default function Home() {
   const data = useLeague()
   const stats = computePlayerStats(data).filter((s) => s.peringkat !== null)
   const r = ringkasan(data)
-  const terakhir = data.sesi.at(-1)
+  // sesi yang baru disusun line-up-nya (tanggal di masa depan) belum dihitung sebagai sesi terakhir
+  const hariIni = isoHariIni()
+  const terakhir = data.sesi.filter((s) => s.tanggal <= hariIni).at(-1)
 
   return (
     <>

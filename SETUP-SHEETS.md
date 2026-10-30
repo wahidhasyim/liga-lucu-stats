@@ -88,9 +88,28 @@ Supaya kolom `tanggal` tidak diubah otomatis oleh Sheets, blok kolom `Sesi!B:B`,
 
 Link ini hanya bisa dipakai untuk membaca data. Orang lain tidak bisa mengedit sheet lewat link tersebut.
 
-## 5. Sambungkan ke website (sekali saja)
+## 5. Pasang API halaman admin (sekali saja)
 
-Di Vercel, buka **Project → Settings → Environment Variables**, lalu tambahkan:
+Halaman admin (`/admin`) menulis langsung ke sheet ini lewat Apps Script.
+
+1. Di Google Sheet, pilih **Ekstensi → Apps Script**.
+2. Hapus semua isi file `Code.gs`, lalu tempel seluruh isi file [`apps-script/Code.gs`](apps-script/Code.gs) dari repo ini. Klik ikon **Simpan**.
+3. Klik ikon gear **Project Settings**. Di bagian **Script properties**, klik **Add script property**:
+   - Property: `ADMIN_PIN`
+   - Value: PIN admin pilihanmu, misalnya 6 angka. Jangan pakai `1234`.
+4. Klik **Deploy → New deployment**. Pada ikon gear di samping "Select type", pilih **Web app**, lalu isi:
+   - **Execute as:** Me
+   - **Who has access:** Anyone
+5. Klik **Deploy**. Google akan meminta izin akses ke spreadsheet. Pilih akunmu, klik **Advanced → Go to … (unsafe)**, lalu **Allow**. Peringatan ini muncul karena script-nya buatan sendiri, bukan dari Google.
+6. Salin **Web app URL** (berakhiran `/exec`).
+
+"Anyone" artinya siapa pun bisa mengirim request ke URL itu, tetapi tanpa PIN yang benar semua request ditolak. Setelah 10 kali PIN salah, API dikunci selama 10 menit.
+
+Kalau nanti `Code.gs` diperbarui, tempel versi barunya, lalu pilih **Deploy → Manage deployments → ikon pensil → Version: New version → Deploy**. URL-nya tetap sama.
+
+## 6. Sambungkan ke website (sekali saja)
+
+Kirim 6 link ini ke pengelola website: 5 link CSV dari langkah 4 dan Web app URL dari langkah 5. Link-link ini disimpan di `src/config.ts`. Pengelola website juga bisa mengisinya lewat environment variable berikut:
 
 | Nama | Isi |
 |---|---|
@@ -99,19 +118,25 @@ Di Vercel, buka **Project → Settings → Environment Variables**, lalu tambahk
 | `VITE_SHEET_STATISTIK_URL` | link CSV tab Statistik |
 | `VITE_SHEET_LAGA_URL` | link CSV tab Laga |
 | `VITE_SHEET_POIN_URL` | link CSV tab Poin |
+| `VITE_ADMIN_API_URL` | Web app URL dari Apps Script |
 
-Setelah itu buka **Deployments**, klik **Redeploy** pada deployment terakhir, dan tunggu sampai selesai.
+Setelah itu website perlu di-deploy ulang dengan perintah `firebase deploy --only hosting`.
 
-## Rutinitas mingguan
+## Rutinitas mingguan (lewat halaman admin)
 
-1. Tambah satu baris baru di tab **Sesi**.
-2. Tambah satu baris per pemain yang hadir di tab **Statistik**, lengkap dengan nama timnya.
-3. Tambah satu baris per pertandingan di tab **Laga**.
-4. Selesai. Perubahan muncul di website sekitar 5 menit kemudian, karena Google menyimpan cache untuk link yang dipublikasikan.
+Buka `https://ligalucudepok.web.app/admin` dari HP, lalu masukkan PIN.
+
+1. **Sebelum main, buka tab Sesi.** Pilih **+ Sesi baru**, lalu isi tanggal dan lokasi. Centang pemain yang hadir, lalu tekan **Acak seimbang** atau pilih tim A–D satu per satu. Nama tim bisa diganti sesukamu. Setelah itu tekan **Buat sesi**.
+2. **Setelah main, buka tab Hasil.** Isi skor tiap laga. Laga yang tidak jadi dimainkan bisa dihapus dengan ✕. Isi gol dan assist tiap pemain dengan tombol −/+, pilih MOTM dengan ★, lalu tekan **Simpan hasil**.
+3. **Ada anggota baru? Buka tab Pemain** dan tekan **+ Tambah pemain**. Anggota yang sudah tidak ikut bisa dinonaktifkan; riwayatnya tetap tersimpan.
+
+Perubahan langsung terlihat di halaman admin. Di web publik, perubahan baru muncul sekitar 5 menit kemudian, karena Google menyimpan cache untuk link yang dipublikasikan. Semua data tetap bisa dilihat dan dikoreksi langsung di Google Sheets.
 
 ## Kalau ada yang aneh
 
 - **Data pemain atau sesi tidak muncul.** Cek apakah `pemain_id` dan `sesi_id` di tab Statistik sudah persis sama dengan yang ada di tab Pemain dan tab Sesi. Baris dengan ID yang salah dilewati secara otomatis.
 - **Website menampilkan "Data belum bisa dimuat".** Pastikan kelima tab masih berstatus dipublikasikan (langkah 4) dan semua link sudah diisi di Vercel.
 - **Pemain dapat 0 laga padahal timnya main.** Cek ejaan kolom `tim` di tab Statistik; harus sama dengan nama tim di tab Laga.
+- **Halaman admin bilang "PIN salah" padahal benar.** Cek `ADMIN_PIN` di Script properties (spasi ikut dihitung). Kalau muncul "Terlalu banyak PIN salah", tunggu 10 menit.
+- **Halaman admin bilang "Tidak bisa menghubungi server".** Pastikan Web app di-deploy dengan akses **Anyone** dan URL yang dipakai berakhiran `/exec`.
 - **Foto tidak tampil.** Pastikan link foto bisa dibuka di jendela incognito. Untuk Google Drive, ubah akses file menjadi "Siapa saja yang memiliki link".
