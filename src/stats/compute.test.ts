@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BarisStat, Hasil, Laga, LeagueData, Pemain, Sesi } from '../data/types'
-import { barisSesi, compareDefault, computePlayerStats, isStatKey, poinBaris, riwayatPemain, ringkasan, sortBy, standingSesi, type PlayerStats } from './compute'
+import { barisSesi, compareDefault, computePlayerStats, isStatKey, lineupSesi, poinBaris, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
 
 const pemain = (id: string, nama: string, aktif = true): Pemain => ({ id, nama, panggilan: nama, posisi: 'MID', fotoUrl: '', aktif })
 const sesi = (id: string, tanggal: string, pekan: number): Sesi => ({ id, tanggal, lokasi: '', catatan: '', pekan })
@@ -173,5 +173,33 @@ describe('standingSesi', () => {
 
   it('is empty without laga', () => {
     expect(standingSesi([])).toEqual([])
+  })
+})
+
+describe('sesi akan datang & line-up', () => {
+  const lineup = (sesiId: string, pemainId: string, tim: string): BarisStat => ({ ...baris(sesiId, pemainId, null), tim })
+  const dataLineup: LeagueData = {
+    ...data,
+    sesi: [...data.sesi, sesi('S3', '2026-10-31', 3), sesi('S4', '2026-11-07', 4)],
+    statistik: [...data.statistik, lineup('S3', 'C', 'Tim Biru'), lineup('S3', 'A', 'Tim Merah'), lineup('S3', 'B', 'tim biru'), lineup('S3', 'E', ''), lineup('S4', 'A', 'X')],
+  }
+
+  it('treats sessions with any recorded result as played', () => {
+    expect(sudahMain(dataLineup, 'S1')).toBe(true)
+    expect(sudahMain(dataLineup, 'S3')).toBe(false)
+    expect(sudahMain({ ...dataLineup, laga: [{ sesiId: 'S3', timA: 'Tim Biru', skorA: 0, skorB: 0, timB: 'Tim Merah' }] }, 'S3')).toBe(true)
+  })
+
+  it('lists unplayed sessions from today onwards, nearest first', () => {
+    expect(sesiAkanDatang(dataLineup, '2026-10-31').map((s) => s.id)).toEqual(['S3', 'S4'])
+    expect(sesiAkanDatang(dataLineup, '2026-11-01').map((s) => s.id)).toEqual(['S4'])
+  })
+
+  it('groups the lineup by team in order of appearance, players by name, no-team last', () => {
+    expect(lineupSesi(dataLineup, 'S3').map((g) => [g.tim, g.pemain.map((p) => p.id)])).toEqual([
+      ['Tim Biru', ['B', 'C']],
+      ['Tim Merah', ['A']],
+      ['', ['E']],
+    ])
   })
 })

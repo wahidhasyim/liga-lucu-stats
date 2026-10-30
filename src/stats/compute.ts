@@ -167,3 +167,36 @@ export function standingSesi(laga: Laga[]): BarisStanding[] {
   }
   return [...byTim.values()].sort((a, b) => b.poin - a.poin || b.selisih - a.selisih || b.golMasuk - a.golMasuk || a.tim.localeCompare(b.tim, 'id'))
 }
+
+// Sudah ada hasil tercatat: laga dengan skor, atau gol/assist/MOTM/hasil pemain.
+export function sudahMain(data: LeagueData, sesiId: string): boolean {
+  return (
+    data.laga.some((l) => l.sesiId === sesiId) ||
+    data.statistik.some((b) => b.sesiId === sesiId && (b.gol > 0 || b.assist > 0 || b.motm || b.menang + b.seri + b.kalah > 0))
+  )
+}
+
+// Sesi yang tanggalnya hari ini atau nanti dan belum ada hasilnya, urut dari yang terdekat.
+export function sesiAkanDatang(data: LeagueData, hariIni: string): Sesi[] {
+  return data.sesi.filter((s) => s.tanggal >= hariIni && !sudahMain(data, s.id))
+}
+
+export interface TimLineup {
+  tim: string // '' = belum dapat tim
+  pemain: Pemain[]
+}
+
+// Pemain terdaftar di sebuah sesi per tim, urut sesuai tim pertama kali muncul; tanpa tim di akhir.
+export function lineupSesi(data: LeagueData, sesiId: string): TimLineup[] {
+  const pemainById = new Map(data.pemain.map((p) => [p.id, p]))
+  const grup: TimLineup[] = []
+  for (const b of data.statistik) {
+    const p = b.sesiId === sesiId ? pemainById.get(b.pemainId) : undefined
+    if (!p) continue
+    let g = grup.find((x) => kunciTim(x.tim) === kunciTim(b.tim))
+    if (!g) grup.push((g = { tim: b.tim, pemain: [] }))
+    g.pemain.push(p)
+  }
+  for (const g of grup) g.pemain.sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
+  return [...grup.filter((g) => g.tim), ...grup.filter((g) => !g.tim)]
+}

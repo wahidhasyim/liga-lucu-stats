@@ -15,6 +15,13 @@ Atas persetujuan pemilik, web publik juga membaca data lewat Apps Script (`doGet
 - Jumlah tim bisa diatur 2–8 dengan tombol tambah/hapus tim. Pemain di tim yang dihapus jadi belum dapat tim. Kalau timnya lebih dari 4, pilihan tim tiap pemain memakai dropdown.
 - Pemain baru bisa diketik langsung di form sesi (nama dan posisi). Di `simpanSesi`, entri line-up `{ baru: { nama, posisi }, tim }` mendaftarkan pemain itu ke tab Pemain dalam penyimpanan yang sama. Kalau ada data yang tidak valid, tidak ada yang tersimpan. Pengecekan nama kembar dilakukan di browser lewat konfirmasi.
 
+## Revisi 2026-10-30: sesi yang akan datang
+
+- Sebuah sesi dianggap "akan datang" kalau tanggalnya hari ini atau setelahnya dan belum punya hasil apa pun (tidak ada laga berskor, dan tidak ada gol, assist, MOTM, atau hasil pemain).
+- Halaman Sesi publik menampilkan bagian "Sesi yang akan datang" di atas arsip, dengan jumlah pemain dan tim. Detail sesi yang akan datang menampilkan line-up pemain per tim, tanpa poin.
+- Tab Sesi di admin menampilkan kartu sesi yang akan datang, lengkap dengan pemain per tim. Ketuk kartunya untuk mengedit sesi itu.
+- Kartu "Sesi terakhir" di beranda tidak memakai sesi hari ini yang belum ada hasilnya.
+
 ## Arsitektur
 
 - **API admin:** `apps-script/Code.gs`, sebuah Google Apps Script yang menempel di file Sheet, di-deploy sebagai Web app (*Execute as: Me*, *Who has access: Anyone*).

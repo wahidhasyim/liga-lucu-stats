@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { kunciTim } from '../data/parse'
 import { POSISI, type LeagueData, type Posisi } from '../data/types'
 import { formatTanggalPendek, isoHariIni } from '../lib/format'
-import { computePlayerStats } from '../stats/compute'
+import { computePlayerStats, lineupSesi, sesiAkanDatang } from '../stats/compute'
 import type { Kirim } from './AdminPage'
 import { bagiSeimbang, median } from './logic'
 import { Field, HURUF_TIM, SaveBar, useSimpan } from './ui'
@@ -19,12 +19,46 @@ export function SesiAdmin({ data, kirim }: { data: LeagueData; kirim: Kirim }) {
   // status simpan di sini, supaya pesannya tidak hilang saat form dipasang ulang
   const simpan = useSimpan()
   const terbaru = [...data.sesi].reverse()
+  const akanDatang = sesiAkanDatang(data, isoHariIni())
   const tersimpan = (id: string) => {
     setSesiId(id)
     setVersi((v) => v + 1)
   }
   return (
     <>
+      {akanDatang.length > 0 && (
+        <section className="adm-upcoming">
+          <h2 className="disp adm-h">Sesi yang akan datang</h2>
+          {akanDatang.map((s) => {
+            const lineup = lineupSesi(data, s.id)
+            const total = lineup.reduce((n, g) => n + g.pemain.length, 0)
+            return (
+              <button key={s.id} type="button" className={s.id === sesiId ? 'adm-card adm-up on' : 'adm-card adm-up'} onClick={() => setSesiId(s.id)}>
+                <div className="adm-row-head">
+                  <span className="disp adm-up-title">
+                    Pekan {s.pekan} · {formatTanggalPendek(s.tanggal)}
+                  </span>
+                  <span className="lbl mute">{total} pemain</span>
+                </div>
+                {s.lokasi && <div className="mute adm-up-lok">{s.lokasi}</div>}
+                {lineup.length === 0 ? (
+                  <div className="mute">Belum ada pemain.</div>
+                ) : (
+                  lineup.map((g) => (
+                    <div key={g.tim || '-'} className="adm-up-tim">
+                      <span className="lbl gold">
+                        {g.tim || 'Tanpa tim'} · {g.pemain.length}
+                      </span>
+                      <span>{g.pemain.map((p) => p.panggilan || p.nama).join(', ')}</span>
+                    </div>
+                  ))
+                )}
+                <div className="lbl mute adm-up-edit">{s.id === sesiId ? 'Sedang diedit ↓' : 'Ketuk untuk edit'}</div>
+              </button>
+            )
+          })}
+        </section>
+      )}
       <Field label="Sesi">
         <select className="input" value={sesiId} onChange={(e) => setSesiId(e.target.value)}>
           <option value="">+ Sesi baru</option>

@@ -1,25 +1,36 @@
-import { Link } from 'react-router-dom'
-import { useLeague } from '../components/Layout'
-import { Leaderboard } from '../components/Leaderboard'
-import { PlayerPhoto } from '../components/PlayerPhoto'
-import { StandingTable } from '../components/StandingTable'
-import { EmptyState } from '../components/StatusStates'
-import type { LeagueData, Sesi } from '../data/types'
-import { formatTanggal, isoHariIni } from '../lib/format'
-import { barisSesi, computePlayerStats, lagaSesi, ringkasan, sortBy, standingSesi, type StatKey } from '../stats/compute'
+import { Link } from "react-router-dom";
+import { useLeague } from "../components/Layout";
+import { Leaderboard } from "../components/Leaderboard";
+import { PlayerPhoto } from "../components/PlayerPhoto";
+import { StandingTable } from "../components/StandingTable";
+import { EmptyState } from "../components/StatusStates";
+import type { LeagueData, Sesi } from "../data/types";
+import { formatTanggal, isoHariIni } from "../lib/format";
+import {
+  barisSesi,
+  computePlayerStats,
+  sudahMain,
+  lagaSesi,
+  ringkasan,
+  sortBy,
+  standingSesi,
+  type StatKey,
+} from "../stats/compute";
 
 const BOARDS: { judul: string; key: StatKey }[] = [
-  { judul: 'Rating pemain', key: 'rating' },
-  { judul: 'Topskor', key: 'gol' },
-  { judul: 'Top assist', key: 'assist' },
-  { judul: 'Raja MOTM', key: 'motm' },
-]
+  { judul: "Rating pemain", key: "rating" },
+  { judul: "Topskor", key: "gol" },
+  { judul: "Top assist", key: "assist" },
+  { judul: "Raja MOTM", key: "motm" },
+];
 
 function SesiTerakhir({ data, sesi }: { data: LeagueData; sesi: Sesi }) {
-  const baris = barisSesi(data, sesi.id)
-  const motm = baris.filter((b) => b.baris.motm)
-  const pencetak = baris.filter((b) => b.baris.gol > 0).sort((a, b) => b.baris.gol - a.baris.gol)
-  const standing = standingSesi(lagaSesi(data, sesi.id))
+  const baris = barisSesi(data, sesi.id);
+  const motm = baris.filter((b) => b.baris.motm);
+  const pencetak = baris
+    .filter((b) => b.baris.gol > 0)
+    .sort((a, b) => b.baris.gol - a.baris.gol);
+  const standing = standingSesi(lagaSesi(data, sesi.id));
   return (
     <section className="latest">
       <div className="sec-head">
@@ -33,7 +44,11 @@ function SesiTerakhir({ data, sesi }: { data: LeagueData; sesi: Sesi }) {
         {sesi.lokasi && ` · ${sesi.lokasi}`}
       </div>
       {motm.map((m) => (
-        <Link key={m.pemain.id} className="latest-motm" to={`/pemain/${m.pemain.id}`}>
+        <Link
+          key={m.pemain.id}
+          className="latest-motm"
+          to={`/pemain/${m.pemain.id}`}
+        >
           <PlayerPhoto pemain={m.pemain} size="sm" />
           <div>
             <div className="lbl gold">Man of the match</div>
@@ -60,23 +75,32 @@ function SesiTerakhir({ data, sesi }: { data: LeagueData; sesi: Sesi }) {
         </div>
       )}
     </section>
-  )
+  );
 }
 
 export default function Home() {
-  const data = useLeague()
-  const stats = computePlayerStats(data).filter((s) => s.peringkat !== null)
-  const r = ringkasan(data)
-  // sesi yang baru disusun line-up-nya (tanggal di masa depan) belum dihitung sebagai sesi terakhir
-  const hariIni = isoHariIni()
-  const terakhir = data.sesi.filter((s) => s.tanggal <= hariIni).at(-1)
+  const data = useLeague();
+  const stats = computePlayerStats(data).filter((s) => s.peringkat !== null);
+  const r = ringkasan(data);
+  // sesi yang baru disusun line-up-nya (hari ini/nanti, belum ada hasil) belum dihitung sebagai sesi terakhir
+  const hariIni = isoHariIni();
+  const terakhir = data.sesi
+    .filter(
+      (s) =>
+        s.tanggal < hariIni || (s.tanggal === hariIni && sudahMain(data, s.id)),
+    )
+    .at(-1);
 
   return (
     <>
       <section className="wrap hero">
         <img className="hero-logo" src="/logo.svg" alt="Logo Liga Lucu Depok" />
         <div>
-          <div className="lbl gold">{terakhir ? `Pekan ${terakhir.pekan} · ${formatTanggal(terakhir.tanggal)}` : 'Fun football tiap weekend'}</div>
+          <div className="lbl gold">
+            {terakhir
+              ? `Pekan ${terakhir.pekan} · ${formatTanggal(terakhir.tanggal)}`
+              : "Fun football tiap weekend"}
+          </div>
           <h1 className="disp">
             Bukan liga pro.
             <br />
@@ -108,16 +132,21 @@ export default function Home() {
                   key={b.key}
                   judul={b.judul}
                   statKey={b.key}
-                  items={sortBy(stats, b.key).filter((s) => s[b.key] > 0).slice(0, 3)}
+                  items={sortBy(stats, b.key)
+                    .filter((s) => s[b.key] > 0)
+                    .slice(0, 3)}
                   lihatSemua={`/statistik?urut=${b.key}`}
                 />
               ))}
             </div>
           </>
         ) : (
-          <EmptyState judul="Belum ada pertandingan" pesan="Leaderboard muncul setelah sesi pertama dicatat di Google Sheets." />
+          <EmptyState
+            judul="Belum ada pertandingan"
+            pesan="Leaderboard muncul setelah sesi pertama dicatat di Google Sheets."
+          />
         )}
       </div>
     </>
-  )
+  );
 }
