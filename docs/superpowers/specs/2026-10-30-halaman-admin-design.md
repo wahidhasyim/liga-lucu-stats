@@ -13,7 +13,7 @@ Atas persetujuan pemilik, web publik juga membaca data lewat Apps Script (`doGet
 ## Revisi 2026-10-30: form sesi
 
 - Jumlah tim bisa diatur 2–8 dengan tombol tambah/hapus tim. Pemain di tim yang dihapus jadi belum dapat tim. Kalau timnya lebih dari 4, pilihan tim tiap pemain memakai dropdown.
-- Pemain baru bisa diketik langsung di form sesi (nama dan posisi). Di `simpanSesi`, entri line-up `{ baru: { nama, posisi }, tim }` mendaftarkan pemain itu ke tab Pemain dalam penyimpanan yang sama. Kalau ada data yang tidak valid, tidak ada yang tersimpan. Pengecekan nama kembar dilakukan di browser lewat konfirmasi.
+- Pemain baru bisa diketik langsung di form sesi, cukup namanya. Posisinya otomatis MID dan bisa diubah nanti di tab Pemain. Di `simpanSesi`, entri line-up `{ baru: { nama, posisi }, tim }` mendaftarkan pemain itu ke tab Pemain dalam penyimpanan yang sama. Kalau ada data yang tidak valid, tidak ada yang tersimpan. Pengecekan nama kembar dilakukan di browser lewat konfirmasi.
 
 ## Revisi 2026-10-30: sesi yang akan datang
 

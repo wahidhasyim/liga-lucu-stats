@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { kunciTim } from '../data/parse'
-import { POSISI, type LeagueData, type Posisi } from '../data/types'
+import type { LeagueData, Posisi } from '../data/types'
 import { formatTanggalPendek, isoHariIni } from '../lib/format'
 import { computePlayerStats, lineupSesi, sesiAkanDatang } from '../stats/compute'
 import type { Kirim } from './AdminPage'
@@ -114,7 +114,6 @@ function SesiForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk }, on
   const [tugas, setTugas] = useState<Map<string, number | null>>(awal.tugas)
   const [baru, setBaru] = useState<PemainBaru[]>([])
   const [isianNama, setIsianNama] = useState('')
-  const [isianPosisi, setIsianPosisi] = useState<Posisi>('MID')
 
   const n = namaTim.length
   const lama: Baris[] = data.pemain
@@ -148,10 +147,9 @@ function SesiForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk }, on
     const kembar = semua.find((p) => p.nama.toLowerCase() === nama.toLowerCase())
     if (kembar && !window.confirm(`"${kembar.nama}" sudah ada di daftar. Tetap tambahkan sebagai pemain baru?`)) return
     const kunci = `baru:${Date.now()}`
-    setBaru([{ kunci, nama, posisi: isianPosisi }, ...baru])
+    setBaru([{ kunci, nama, posisi: 'MID' }, ...baru])
     ubahTugas(kunci, null)
     setIsianNama('')
-    setIsianPosisi('MID')
   }
 
   const hapusPemainBaru = (kunci: string) => {
@@ -246,13 +244,6 @@ function SesiForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk }, on
       </div>
       <form className="adm-newplayer" onSubmit={tambahPemain}>
         <input className="input" value={isianNama} placeholder="Nama pemain baru…" aria-label="Nama pemain baru" onChange={(e) => setIsianNama(e.target.value)} />
-        <select className="input" value={isianPosisi} aria-label="Posisi pemain baru" onChange={(e) => setIsianPosisi(e.target.value as Posisi)}>
-          {POSISI.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
         <button type="submit" className="btn" disabled={!isianNama.trim()}>
           + Tambah
         </button>
@@ -271,8 +262,7 @@ function SesiForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk }, on
                   {hadir ? '✓' : ''}
                 </span>
                 <span className="adm-name">{p.nama}</span>
-                <span className="c-pos">{p.posisi}</span>
-                {p.baru && <span className="badge-baru">Baru</span>}
+                {p.baru ? <span className="badge-baru">Baru</span> : <span className="c-pos">{p.posisi}</span>}
               </button>
               {hadir &&
                 (n <= MAKS_TOMBOL_TIM ? (

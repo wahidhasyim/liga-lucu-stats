@@ -221,7 +221,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .team-tag { display: grid; place-items: center; width: 32px; height: 32px; background: var(--gold); color: var(--bg); font-family: var(--font-display); font-size: 20px; }
 .adm-acak { width: 100%; margin: 12px 0 8px; }
 .adm-card .adm-acak { margin-bottom: 0; }
-.adm-newplayer { display: grid; grid-template-columns: 1fr 84px auto; gap: 8px; margin-top: 14px; }
+.adm-newplayer { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 14px; }
 .adm-newplayer .input { min-width: 0; }
 .adm-newplayer .btn { padding: 10px 12px; white-space: nowrap; letter-spacing: 0.12em; }
 .badge-baru { flex-shrink: 0; padding: 1px 6px; border: 1px solid var(--gold); color: var(--gold); font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
