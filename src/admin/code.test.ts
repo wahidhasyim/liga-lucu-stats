@@ -208,6 +208,17 @@ describe('Code.gs: simpanHasil', () => {
   })
 })
 
+describe('Code.gs: hapusPemain', () => {
+  it('removes the player and their Statistik rows', () => {
+    const { kirim } = siapkan()
+    const res = kirim('hapusPemain', { id: 'P01' })
+    expect(res.data.pemain.map((p: { id: string }) => p.id)).toEqual(['P02', 'P09'])
+    expect(res.data.statistik).toEqual([])
+    expect(res.data.sesi).toHaveLength(1)
+    expect(kirim('hapusPemain', { id: 'P01' }).error).toMatch(/P01/)
+  })
+})
+
 describe('Code.gs: hapusSesi', () => {
   it('removes the session from Sesi, Statistik and Laga', () => {
     const { kirim } = siapkan({

@@ -51,6 +51,7 @@ Atas persetujuan pemilik, web publik juga membaca data lewat Apps Script (`doGet
 | `simpanPemain` | `{ id?, nama, panggilan, posisi, fotoUrl, aktif }` | Tanpa `id`: tambah pemain dengan ID otomatis (`P` + 2 digit, lanjut dari nomor terbesar). Dengan `id`: ubah pemain itu. |
 | `simpanSesi` | `{ id?, tanggal, lokasi, catatan, lineup: [{ pemainId, tim }] }` | Tambah sesi (ID `S` + 3 digit) atau ubah sesi. Baris Statistik sesi itu diganti sesuai line-up; gol, assist, dan MOTM pemain yang tetap ada di line-up dipertahankan. Laga yang timnya sudah tidak ada di line-up ikut dihapus. |
 | `simpanHasil` | `{ sesiId, laga: [{ timA, skorA, skorB, timB }], statistik: [{ pemainId, gol, assist, motm }] }` | Semua baris Laga sesi itu diganti. Gol, assist, dan MOTM di baris Statistik sesi itu diperbarui. |
+| `hapusPemain` | `{ id }` | Menghapus pemain di tab Pemain beserta baris Statistik-nya di semua sesi. Di admin ada konfirmasi yang menyebut jumlah sesinya dan menyarankan nonaktif. |
 | `hapusSesi` | `{ id }` | Menghapus baris sesi itu di tab Sesi, Statistik, dan Laga. |
 
 Aturan validasi:

@@ -2,7 +2,7 @@ import { API_URL } from '../config'
 import { parseLeague } from '../data/parse'
 import type { LeagueData, RawTables } from '../data/types'
 
-export type Aksi = 'baca' | 'simpanPemain' | 'simpanSesi' | 'simpanHasil' | 'hapusSesi'
+export type Aksi = 'baca' | 'simpanPemain' | 'simpanSesi' | 'simpanHasil' | 'hapusPemain' | 'hapusSesi'
 
 interface Balasan {
   ok: boolean

@@ -221,6 +221,19 @@ const AKSI = {
     return { sesiId }
   },
 
+  // Menghapus pemain beserta baris Statistik-nya di semua sesi.
+  hapusPemain(d) {
+    const id = teks(d.id)
+    const pemain = tabel('pemain')
+    if (!pemain.rows.some((r) => r.id === id)) throw new Error(`Pemain ${id} tidak ditemukan.`)
+    pemain.rows = pemain.rows.filter((r) => r.id !== id)
+    tulis(pemain)
+    const statistik = tabel('statistik')
+    statistik.rows = statistik.rows.filter((r) => r.pemain_id !== id)
+    tulis(statistik)
+    return { id }
+  },
+
   hapusSesi(d) {
     const id = teks(d.id)
     const sesi = tabel('sesi')

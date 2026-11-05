@@ -36,6 +36,19 @@ export function PemainAdmin({ data, kirim }: { data: LeagueData; kirim: Kirim })
       return form.id ? `${form.nama} diperbarui.` : `${form.nama} ditambahkan (${id}).`
     })
 
+  const hapus = () => {
+    if (!form?.id) return
+    const { id, nama } = form
+    const sesi = new Set(data.statistik.filter((b) => b.pemainId === id).map((b) => b.sesiId)).size
+    const riwayat = sesi ? `\n\n${nama} tercatat di ${sesi} sesi. Gol, assist, dan MOTM-nya di sesi itu ikut terhapus. Kalau cuma tidak main lagi, lebih baik dinonaktifkan saja.` : ''
+    if (!window.confirm(`Hapus ${nama} (${id})?${riwayat}`)) return
+    jalankan(async () => {
+      await kirim('hapusPemain', { id })
+      setForm(null)
+      return `${nama} dihapus.`
+    })
+  }
+
   return (
     <>
       {form ? (
@@ -89,6 +102,11 @@ export function PemainAdmin({ data, kirim }: { data: LeagueData; kirim: Kirim })
         <SaveBar status={status}>
           {form && (
             <>
+              {form.id && (
+                <button type="button" className="btn-ghost danger" disabled={sibuk} onClick={hapus}>
+                  Hapus
+                </button>
+              )}
               <button type="button" className="btn-ghost" disabled={sibuk} onClick={() => setForm(null)}>
                 Batal
               </button>
