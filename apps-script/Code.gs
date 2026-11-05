@@ -221,17 +221,19 @@ const AKSI = {
     return { sesiId }
   },
 
-  // Menghapus pemain beserta baris Statistik-nya di semua sesi.
+  // Menghapus satu ({ id }) atau banyak ({ ids }) pemain beserta baris Statistik-nya di semua sesi.
   hapusPemain(d) {
-    const id = teks(d.id)
+    const ids = (Array.isArray(d.ids) ? d.ids : [d.id]).map(teks).filter(Boolean)
+    if (ids.length === 0) throw new Error('Pilih minimal satu pemain.')
     const pemain = tabel('pemain')
-    if (!pemain.rows.some((r) => r.id === id)) throw new Error(`Pemain ${id} tidak ditemukan.`)
-    pemain.rows = pemain.rows.filter((r) => r.id !== id)
+    const hilang = ids.filter((id) => !pemain.rows.some((r) => r.id === id))
+    if (hilang.length) throw new Error(`Pemain ${hilang.join(', ')} tidak ditemukan.`)
+    pemain.rows = pemain.rows.filter((r) => ids.indexOf(r.id) < 0)
     tulis(pemain)
     const statistik = tabel('statistik')
-    statistik.rows = statistik.rows.filter((r) => r.pemain_id !== id)
+    statistik.rows = statistik.rows.filter((r) => ids.indexOf(r.pemain_id) < 0)
     tulis(statistik)
-    return { id }
+    return { ids }
   },
 
   hapusSesi(d) {

@@ -212,6 +212,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn { min-height: 44px; }
 .adm-pick { width: 100%; border-width: 0 0 1px; border-style: solid; border-color: var(--line); background: none; color: inherit; text-align: left; cursor: pointer; }
 .adm-pick.off { opacity: 0.55; }
+.adm-pick.on .tick { border-color: var(--gold); background: var(--gold); }
+.adm-mini { padding: 6px 12px; font-size: 11px; }
+.adm-sub { margin: 8px 0 4px; }
+.btn.danger-fill { border-color: #e8826b; background: #e8826b; color: var(--bg); }
 .adm-pick:hover .lb-name { color: var(--gold); }
 
 .adm-teams { display: grid; gap: 8px; }

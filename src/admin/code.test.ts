@@ -217,6 +217,15 @@ describe('Code.gs: hapusPemain', () => {
     expect(res.data.sesi).toHaveLength(1)
     expect(kirim('hapusPemain', { id: 'P01' }).error).toMatch(/P01/)
   })
+
+  it('removes several players at once, or none if one is unknown', () => {
+    const { kirim } = siapkan()
+    expect(kirim('hapusPemain', { ids: ['P02', 'P77'] }).error).toMatch(/P77/)
+    expect(kirim('hapusPemain', { ids: [] }).error).toMatch(/minimal/)
+    const res = kirim('hapusPemain', { ids: ['P02', 'P09'] })
+    expect(res.data.pemain.map((p: { id: string }) => p.id)).toEqual(['P01'])
+    expect(res.data.statistik).toHaveLength(1)
+  })
 })
 
 describe('Code.gs: hapusSesi', () => {
