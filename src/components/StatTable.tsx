@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { formatAngka, formatDesimal, formatPersen } from '../lib/format'
+import { formatAngka, formatDesimal, formatPersen, POSISI_LABEL } from '../lib/format'
 import type { PlayerStats, StatKey } from '../stats/compute'
 
 const KOLOM: { key: StatKey; label: string; title: string }[] = [
@@ -61,7 +61,7 @@ export function StatTable({ rows, urut, onUrut }: Props) {
               <td className="c-name">
                 <span className="c-rank">{i + 1}</span>
                 <Link to={`/pemain/${s.pemain.id}`}>{s.pemain.nama}</Link>
-                <span className="c-pos">{s.pemain.posisi}</span>
+                <span className="c-pos">{POSISI_LABEL[s.pemain.posisi]}</span>
               </td>
               {KOLOM.map((k) => (
                 <td key={k.key} className={urut === k.key ? 'sorted' : undefined}>

@@ -135,7 +135,7 @@ function HasilForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk } }:
               <div key={b.pemainId} className="adm-stat">
                 <span className="adm-name">
                   {p?.panggilan ?? b.pemainId}
-                  <span className="c-pos">{p?.posisi}</span>
+                  {p?.posisi === 'GK' && <span className="c-pos">Kiper</span>}
                 </span>
                 <Stepper label={`gol ${p?.panggilan}`} value={s.gol} onChange={(gol) => ubahIsian(b.pemainId, { gol })} />
                 <Stepper label={`assist ${p?.panggilan}`} value={s.assist} onChange={(assist) => ubahIsian(b.pemainId, { assist })} />

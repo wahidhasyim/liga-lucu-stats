@@ -1,4 +1,6 @@
-import { POSISI, type BarisStat, type Hasil, type Laga, type LeagueData, type Pemain, type Poin, type Posisi, type RawTables, type Row, type Sesi } from './types'
+import { type BarisStat, type Hasil, type Laga, type LeagueData, type Pemain, type Poin, type Posisi, type RawTables, type Row, type Sesi } from './types'
+
+export const kePosisi = (nilai: string): Posisi => (['GK', 'KIPER', 'KEEPER'].includes(nilai.trim().toUpperCase()) ? 'GK' : 'OUT')
 
 const str = (v: string | undefined) => (v ?? '').trim()
 
@@ -42,8 +44,7 @@ function parsePemain(rows: Row[]): Pemain[] {
     const id = str(r.id)
     if (!id) continue
     const nama = str(r.nama) || id
-    const posisiRaw = str(r.posisi).toUpperCase()
-    const posisi: Posisi = (POSISI as string[]).includes(posisiRaw) ? (posisiRaw as Posisi) : 'MID'
+    const posisi = kePosisi(str(r.posisi))
     out.push({
       id,
       nama,

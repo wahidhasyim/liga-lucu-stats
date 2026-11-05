@@ -20,7 +20,6 @@ const KOLOM = {
 }
 
 const KOLOM_ANGKA = ['gol', 'assist', 'motm', 'skor_a', 'skor_b', 'poin']
-const POSISI = ['GK', 'DEF', 'MID', 'FWD']
 const MAKS_GAGAL = 10
 const POIN_AWAL = [
   ['hadir', 1],
@@ -126,11 +125,10 @@ const AKSI = {
       row = { id: idBaru('P', t.rows.map((r) => r.id), 2) }
       t.rows.push(row)
     }
-    const posisi = teks(d.posisi).toUpperCase()
     Object.assign(row, {
       nama,
       panggilan: teks(d.panggilan),
-      posisi: POSISI.indexOf(posisi) >= 0 ? posisi : 'MID',
+      posisi: kePosisi(d.posisi),
       foto_url: teks(d.fotoUrl),
       aktif: d.aktif === false ? 'FALSE' : 'TRUE',
     })
@@ -151,9 +149,8 @@ const AKSI = {
       if (l.baru) {
         const nama = teks(l.baru.nama)
         if (!nama) throw new Error('Nama pemain baru wajib diisi.')
-        const posisi = teks(l.baru.posisi).toUpperCase()
         l.pemainId = idBaru('P', pemain.rows.map((r) => r.id), 2)
-        pemain.rows.push({ id: l.pemainId, nama, panggilan: '', posisi: POSISI.indexOf(posisi) >= 0 ? posisi : 'MID', foto_url: '', aktif: 'TRUE' })
+        pemain.rows.push({ id: l.pemainId, nama, panggilan: '', posisi: kePosisi(l.baru.posisi), foto_url: '', aktif: 'TRUE' })
         pemainBaru.push(l.pemainId)
       } else if (!pemain.rows.some((r) => r.id === l.pemainId)) {
         throw new Error(`Pemain ${l.pemainId} tidak dikenal.`)
@@ -291,6 +288,11 @@ function keSel(kolom, v) {
   const s = v === null || v === undefined ? '' : String(v)
   if (KOLOM_ANGKA.indexOf(kolom) >= 0 && s !== '') return Number(s)
   return s
+}
+
+// Cuma kiper (GK) atau outfield (OUT).
+function kePosisi(v) {
+  return ['GK', 'KIPER', 'KEEPER'].indexOf(teks(v).toUpperCase()) >= 0 ? 'GK' : 'OUT'
 }
 
 function teks(v) {

@@ -234,6 +234,16 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .adm-up-tim { display: grid; gap: 2px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.5; }
 .adm-up-edit { margin-top: 8px; }
 .adm-upcoming { margin-bottom: 16px; }
+.adm-paste { margin-bottom: 12px; }
+.adm-paste textarea { width: 100%; resize: vertical; font: inherit; line-height: 1.5; }
+.adm-paste-aksi { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.adm-info { margin: -4px 0 12px; color: var(--gold); font-size: 13px; }
+.adm-setim-kosong { margin: 0 0 12px; font-size: 13px; }
+.adm-setim-grup { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; }
+.adm-setim .adm-acak { margin: 12px 0 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip { padding: 6px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--mute); font: inherit; font-size: 13px; cursor: pointer; }
+.chip.on { border-color: var(--gold); background: var(--gold); color: var(--bg); font-weight: 700; }
 .adm-list { display: grid; }
 .adm-line { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 52px; border-bottom: 1px solid var(--line); }
 .adm-toggle { display: flex; flex: 1; align-items: center; gap: 12px; min-width: 0; min-height: 52px; padding: 0; border: 0; background: none; color: var(--mute); text-align: left; cursor: pointer; font-size: 14px; }

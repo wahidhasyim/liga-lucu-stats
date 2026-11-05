@@ -21,7 +21,7 @@ export const formatAngka = (n: number) => n.toLocaleString('id-ID', { maximumFra
 export const formatDesimal = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 export const formatPersen = (r: number) => `${Math.round(r * 100)}%`
 
-export const POSISI_LABEL: Record<Posisi, string> = { GK: 'Kiper', DEF: 'Bek', MID: 'Gelandang', FWD: 'Penyerang' }
+export const POSISI_LABEL: Record<Posisi, string> = { GK: 'Kiper', OUT: 'Outfield' }
 
 export function inisial(nama: string): string {
   return nama

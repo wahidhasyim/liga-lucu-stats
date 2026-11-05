@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { formatAngka } from '../lib/format'
+import { formatAngka, POSISI_LABEL } from '../lib/format'
 import type { PlayerStats, StatKey } from '../stats/compute'
 import { PlayerPhoto } from './PlayerPhoto'
 
@@ -31,7 +31,7 @@ export function Leaderboard({ judul, statKey, items, lihatSemua }: Props) {
               <PlayerPhoto pemain={s.pemain} size="sm" />
               <div>
                 <div className="lb-name">{s.pemain.nama}</div>
-                <div className="lb-pos">{s.pemain.posisi}</div>
+                <div className="lb-pos">{POSISI_LABEL[s.pemain.posisi]}</div>
               </div>
               <span className="lb-val">{formatAngka(s[statKey])}</span>
             </Link>

@@ -13,7 +13,10 @@ Atas persetujuan pemilik, web publik juga membaca data lewat Apps Script (`doGet
 ## Revisi 2026-10-30: form sesi
 
 - Jumlah tim bisa diatur 2–8 dengan tombol tambah/hapus tim. Pemain di tim yang dihapus jadi belum dapat tim. Kalau timnya lebih dari 4, pilihan tim tiap pemain memakai dropdown.
-- Pemain baru bisa diketik langsung di form sesi, cukup namanya. Posisinya otomatis MID dan bisa diubah nanti di tab Pemain. Di `simpanSesi`, entri line-up `{ baru: { nama, posisi }, tim }` mendaftarkan pemain itu ke tab Pemain dalam penyimpanan yang sama. Kalau ada data yang tidak valid, tidak ada yang tersimpan. Pengecekan nama kembar dilakukan di browser lewat konfirmasi.
+- Pemain baru bisa diketik langsung di form sesi, cukup namanya. Posisinya otomatis outfield; `(GK)` di belakang nama menandai kiper.
+- Posisi cuma dua: kiper (`GK`) dan outfield (`OUT`). Isian lama `DEF`/`MID`/`FWD` dibaca sebagai outfield.
+- **Paste daftar nama**: satu nama per baris, misalnya dari list WhatsApp. Nomor urut, bullet, dan emoji dibuang. Nama yang cocok dengan nama atau panggilan pemain terdaftar langsung dicentang hadir; sisanya ditambahkan sebagai pemain baru.
+- **Request setim**: admin memilih dua pemain hadir atau lebih yang minta satu tim. Saat acak, satu rombongan selalu masuk tim yang sama. Request ini hanya ada di form dan tidak disimpan ke Sheet. Di `simpanSesi`, entri line-up `{ baru: { nama, posisi }, tim }` mendaftarkan pemain itu ke tab Pemain dalam penyimpanan yang sama. Kalau ada data yang tidak valid, tidak ada yang tersimpan. Pengecekan nama kembar dilakukan di browser lewat konfirmasi.
 
 ## Revisi 2026-10-30: sesi yang akan datang
 
@@ -76,10 +79,10 @@ Aturan penulisan ke Sheet:
 
 - Pilih "Sesi baru" atau sesi lama yang mau diedit.
 - Isi tanggal, lokasi (dengan saran dari lokasi sebelumnya), dan catatan.
-- Pilih jumlah tim: 2, 3, atau 4. Defaultnya 4.
+- Jumlah tim 2–8 (lihat revisi form sesi). Defaultnya 4.
 - Nama tim bisa diisi bebas.
 - Setiap pemain aktif ditampilkan per baris. Ketuk nama untuk menandai hadir, lalu pilih tim dengan tombol huruf A–D.
-- Tombol **Acak seimbang** membagi pemain yang hadir ke tim. Kiper disebar lebih dulu, lalu pemain lain dimasukkan satu per satu ke tim dengan jumlah pemain paling sedikit; kalau jumlahnya sama, ke tim dengan total kekuatan paling kecil. Kekuatan diambil dari poin per sesi; pemain baru diberi nilai median. Ada sedikit unsur acak, jadi menekan tombol lagi memberi hasil yang berbeda.
+- Tombol **Acak seimbang** membagi pemain yang hadir ke tim. Pemain yang request setim diperlakukan sebagai satu rombongan. Kiper disebar lebih dulu, lalu pemain lain dimasukkan satu per satu ke tim dengan jumlah pemain paling sedikit; kalau jumlahnya sama, ke tim dengan total kekuatan paling kecil. Kekuatan diambil dari poin per sesi; pemain baru diberi nilai median. Ada sedikit unsur acak, jadi menekan tombol lagi memberi hasil yang berbeda.
 - Ada tombol hapus sesi, dengan konfirmasi.
 
 **Tab Hasil**

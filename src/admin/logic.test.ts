@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bagiSeimbang, cekGolTim, jadwalRoundRobin, median, type Kandidat } from './logic'
+import { bacaDaftarNama, bagiSeimbang, cekGolTim, jadwalRoundRobin, median, type Kandidat } from './logic'
 
 describe('jadwalRoundRobin', () => {
   it('pairs every team exactly once', () => {
@@ -22,7 +22,7 @@ describe('jadwalRoundRobin', () => {
 })
 
 describe('bagiSeimbang', () => {
-  const p = (id: string, kekuatan: number, posisi: Kandidat['posisi'] = 'MID'): Kandidat => ({ id, posisi, kekuatan })
+  const p = (id: string, kekuatan: number, posisi: Kandidat['posisi'] = 'OUT'): Kandidat => ({ id, posisi, kekuatan })
   const tanpaAcak = () => 0.5
 
   it('balances team sizes and strength', () => {
@@ -47,6 +47,37 @@ describe('bagiSeimbang', () => {
     const tim = bagiSeimbang(semua, 4)
     expect(tim.flat().sort()).toEqual(semua.map((x) => x.id).sort())
     expect(Math.max(...tim.map((t) => t.length)) - Math.min(...tim.map((t) => t.length))).toBeLessThanOrEqual(1)
+  })
+
+  it('keeps players who requested the same team together', () => {
+    const semua = [p('budi', 10), p('buci', 9), p('a', 8), p('b', 7), p('c', 6), p('d', 5), p('k1', 1, 'GK'), p('k2', 2, 'GK')]
+    for (let i = 0; i < 20; i++) {
+      const tim = bagiSeimbang(semua, 2, Math.random, [['budi', 'buci'], ['k1', 'c']])
+      const timDari = (id: string) => tim.findIndex((t) => t.includes(id))
+      expect(timDari('budi')).toBe(timDari('buci'))
+      expect(timDari('k1')).toBe(timDari('c'))
+      expect(timDari('k1')).not.toBe(timDari('k2'))
+      expect(tim.map((t) => t.length)).toEqual([4, 4])
+      expect(tim.flat().sort()).toEqual(semua.map((x) => x.id).sort())
+    }
+  })
+
+  it('ignores absent players and one-person requests', () => {
+    const tim = bagiSeimbang([p('a', 3), p('b', 2)], 2, tanpaAcak, [['a', 'hilang'], ['b']])
+    expect(tim).toEqual([['a'], ['b']])
+  })
+})
+
+describe('bacaDaftarNama', () => {
+  it('cleans a pasted WhatsApp list', () => {
+    const teks = '1. Budi Santoso\n2) buci ✅\n- Andi (GK)\n• Raka kiper\n\n  3.  M. Rizky  \nbudi santoso\n🔥🔥'
+    expect(bacaDaftarNama(teks)).toEqual([
+      { nama: 'Budi Santoso', kiper: false },
+      { nama: 'buci', kiper: false },
+      { nama: 'Andi', kiper: true },
+      { nama: 'Raka', kiper: true },
+      { nama: 'M. Rizky', kiper: false },
+    ])
   })
 })
 

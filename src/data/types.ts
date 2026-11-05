@@ -1,5 +1,6 @@
-export type Posisi = 'GK' | 'DEF' | 'MID' | 'FWD'
-export const POSISI: Posisi[] = ['GK', 'DEF', 'MID', 'FWD']
+// Cuma dibedakan kiper dan outfield; nilai lama (DEF/MID/FWD) dibaca sebagai outfield.
+export type Posisi = 'GK' | 'OUT'
+export const POSISI: Posisi[] = ['GK', 'OUT']
 
 export type Hasil = 'M' | 'S' | 'K'
 

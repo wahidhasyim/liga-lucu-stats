@@ -1,4 +1,5 @@
 import { POSISI, type Posisi } from '../data/types'
+import { POSISI_LABEL } from '../lib/format'
 
 interface Props<T extends string> {
   label: string
@@ -20,4 +21,4 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
 }
 
 export type FilterPosisi = Posisi | 'ALL'
-export const POSISI_OPTIONS: { value: FilterPosisi; label: string }[] = [{ value: 'ALL', label: 'Semua' }, ...POSISI.map((p) => ({ value: p, label: p }))]
+export const POSISI_OPTIONS: { value: FilterPosisi; label: string }[] = [{ value: 'ALL', label: 'Semua' }, ...POSISI.map((p) => ({ value: p, label: POSISI_LABEL[p] }))]

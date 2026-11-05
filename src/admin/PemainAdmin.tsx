@@ -15,7 +15,7 @@ interface Form {
   aktif: boolean
 }
 
-const KOSONG: Form = { nama: '', panggilan: '', posisi: 'MID', fotoUrl: '', aktif: true }
+const KOSONG: Form = { nama: '', panggilan: '', posisi: 'OUT', fotoUrl: '', aktif: true }
 
 export function PemainAdmin({ data, kirim }: { data: LeagueData; kirim: Kirim }) {
   const [form, setForm] = useState<Form | null>(null)
@@ -49,7 +49,7 @@ export function PemainAdmin({ data, kirim }: { data: LeagueData; kirim: Kirim })
           </Field>
           <div className="field">
             <span className="lbl mute">Posisi · {POSISI_LABEL[form.posisi]}</span>
-            <Segmented label="Posisi" value={form.posisi} options={POSISI.map((p) => ({ value: p, label: p }))} onChange={(posisi) => setForm({ ...form, posisi })} />
+            <Segmented label="Posisi" value={form.posisi} options={POSISI.map((p) => ({ value: p, label: POSISI_LABEL[p] }))} onChange={(posisi) => setForm({ ...form, posisi })} />
           </div>
           <Field label="Link foto" hint="Opsional. Link gambar yang bisa dibuka publik.">
             <input className="input" type="url" inputMode="url" value={form.fotoUrl} placeholder="https://…" onChange={(e) => setForm({ ...form, fotoUrl: e.target.value })} />
@@ -76,7 +76,7 @@ export function PemainAdmin({ data, kirim }: { data: LeagueData; kirim: Kirim })
             <div>
               <div className="lb-name">{p.nama}</div>
               <div className="lb-pos">
-                {p.id} · {p.posisi}
+                {p.id} · {POSISI_LABEL[p.posisi]}
                 {!p.aktif && ' · nonaktif'}
               </div>
             </div>

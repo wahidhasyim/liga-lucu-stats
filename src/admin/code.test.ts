@@ -9,8 +9,8 @@ function siapkan(isi: Parameters<typeof buatGas>[0] = {}, props: Record<string, 
     {
       Pemain: [
         ['id', 'nama', 'panggilan', 'posisi', 'foto_url', 'aktif'],
-        ['P01', 'Budi Santoso', 'Budi', 'FWD', '', true],
-        ['P02', 'Raka Pratama', 'Raka', 'MID', '', true],
+        ['P01', 'Budi Santoso', 'Budi', 'OUT', '', true],
+        ['P02', 'Raka Pratama', 'Raka', 'GK', '', true],
         ['P09', 'Taufik Hamdani', 'Taufik', 'GK', '', false],
       ],
       Sesi: [
@@ -55,7 +55,7 @@ describe('Code.gs: baca', () => {
     const res = kirim('baca')
     expect(res.ok).toBe(true)
     expect(res.data.sesi).toEqual([{ sesi_id: 'S001', tanggal: '2026-10-24', lokasi: 'Margonda', catatan: '' }])
-    expect(res.data.pemain[0]).toEqual({ id: 'P01', nama: 'Budi Santoso', panggilan: 'Budi', posisi: 'FWD', foto_url: '', aktif: 'TRUE' })
+    expect(res.data.pemain[0]).toEqual({ id: 'P01', nama: 'Budi Santoso', panggilan: 'Budi', posisi: 'OUT', foto_url: '', aktif: 'TRUE' })
     expect(res.data.statistik[0]).toMatchObject({ gol: '2', motm: '1', tim: '' })
     expect(res.data.laga).toEqual([])
     expect(grid('Statistik')[0]).toEqual(['sesi_id', 'pemain_id', 'hasil', 'gol', 'assist', 'motm', 'tim'])
@@ -66,15 +66,15 @@ describe('Code.gs: baca', () => {
 describe('Code.gs: simpanPemain', () => {
   it('adds a player with the next id', () => {
     const { kirim } = siapkan()
-    const res = kirim('simpanPemain', { nama: '  Kevin   Ardiansyah ', panggilan: 'Kevin', posisi: 'fwd', fotoUrl: '', aktif: true })
+    const res = kirim('simpanPemain', { nama: '  Kevin   Ardiansyah ', panggilan: 'Kevin', posisi: 'kiper', fotoUrl: '', aktif: true })
     expect(res.hasil).toEqual({ id: 'P10' })
-    expect(res.data.pemain.at(-1)).toEqual({ id: 'P10', nama: 'Kevin Ardiansyah', panggilan: 'Kevin', posisi: 'FWD', foto_url: '', aktif: 'TRUE' })
+    expect(res.data.pemain.at(-1)).toEqual({ id: 'P10', nama: 'Kevin Ardiansyah', panggilan: 'Kevin', posisi: 'GK', foto_url: '', aktif: 'TRUE' })
   })
 
-  it('edits an existing player and falls back to MID', () => {
+  it('edits an existing player and falls back to outfield', () => {
     const { kirim } = siapkan()
     const res = kirim('simpanPemain', { id: 'P02', nama: 'Raka P.', panggilan: '', posisi: 'striker', fotoUrl: 'https://x/y.jpg', aktif: false })
-    expect(res.data.pemain[1]).toEqual({ id: 'P02', nama: 'Raka P.', panggilan: '', posisi: 'MID', foto_url: 'https://x/y.jpg', aktif: 'FALSE' })
+    expect(res.data.pemain[1]).toEqual({ id: 'P02', nama: 'Raka P.', panggilan: '', posisi: 'OUT', foto_url: 'https://x/y.jpg', aktif: 'FALSE' })
     expect(res.data.pemain).toHaveLength(3)
   })
 
@@ -123,14 +123,14 @@ describe('Code.gs: simpanSesi', () => {
       tanggal: '2026-10-31',
       lineup: [
         { pemainId: 'P01', tim: 'Tim A' },
-        { baru: { nama: ' Kevin  Ardiansyah ', posisi: 'fwd' }, tim: 'Tim B' },
+        { baru: { nama: ' Kevin  Ardiansyah ', posisi: 'gk' }, tim: 'Tim B' },
         { baru: { nama: 'Johan', posisi: '' }, tim: 'Tim B' },
       ],
     })
     expect(res.hasil).toEqual({ id: 'S002', pemainBaru: ['P10', 'P11'] })
     expect(res.data.pemain.slice(-2)).toEqual([
-      { id: 'P10', nama: 'Kevin Ardiansyah', panggilan: '', posisi: 'FWD', foto_url: '', aktif: 'TRUE' },
-      { id: 'P11', nama: 'Johan', panggilan: '', posisi: 'MID', foto_url: '', aktif: 'TRUE' },
+      { id: 'P10', nama: 'Kevin Ardiansyah', panggilan: '', posisi: 'GK', foto_url: '', aktif: 'TRUE' },
+      { id: 'P11', nama: 'Johan', panggilan: '', posisi: 'OUT', foto_url: '', aktif: 'TRUE' },
     ])
     expect(res.data.statistik.filter((r: { sesi_id: string }) => r.sesi_id === 'S002').map((r: Record<string, string>) => [r.pemain_id, r.tim])).toEqual([
       ['P01', 'Tim A'],
@@ -141,7 +141,7 @@ describe('Code.gs: simpanSesi', () => {
 
   it('saves nothing when a new player is invalid', () => {
     const { kirim, grid } = siapkan()
-    const res = kirim('simpanSesi', { tanggal: '2026-10-31', lineup: [{ baru: { nama: 'Ok', posisi: 'MID' }, tim: 'A' }, { baru: { nama: ' ' }, tim: 'A' }] })
+    const res = kirim('simpanSesi', { tanggal: '2026-10-31', lineup: [{ baru: { nama: 'Ok', posisi: 'OUT' }, tim: 'A' }, { baru: { nama: ' ' }, tim: 'A' }] })
     expect(res.error).toMatch(/Nama pemain baru/)
     expect(grid('Pemain')).toHaveLength(4)
     expect(grid('Sesi')).toHaveLength(2)

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { BarisStat, Hasil, Laga, LeagueData, Pemain, Sesi } from '../data/types'
 import { barisSesi, compareDefault, computePlayerStats, isStatKey, lineupSesi, poinBaris, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
 
-const pemain = (id: string, nama: string, aktif = true): Pemain => ({ id, nama, panggilan: nama, posisi: 'MID', fotoUrl: '', aktif })
+const pemain = (id: string, nama: string, aktif = true): Pemain => ({ id, nama, panggilan: nama, posisi: 'OUT', fotoUrl: '', aktif })
 const sesi = (id: string, tanggal: string, pekan: number): Sesi => ({ id, tanggal, lokasi: '', catatan: '', pekan })
 const baris = (sesiId: string, pemainId: string, hasil: Hasil | null, gol = 0, assist = 0, motm = false): BarisStat => ({
   sesiId,

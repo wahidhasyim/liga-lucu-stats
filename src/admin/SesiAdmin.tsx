@@ -4,7 +4,7 @@ import type { LeagueData, Posisi } from '../data/types'
 import { formatTanggalPendek, isoHariIni } from '../lib/format'
 import { computePlayerStats, lineupSesi, sesiAkanDatang } from '../stats/compute'
 import type { Kirim } from './AdminPage'
-import { bagiSeimbang, median } from './logic'
+import { bacaDaftarNama, bagiSeimbang, median, type NamaTempel } from './logic'
 import { Field, HURUF_TIM, SaveBar, useSimpan } from './ui'
 
 const MIN_TIM = 2
@@ -114,6 +114,11 @@ function SesiForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk }, on
   const [tugas, setTugas] = useState<Map<string, number | null>>(awal.tugas)
   const [baru, setBaru] = useState<PemainBaru[]>([])
   const [isianNama, setIsianNama] = useState('')
+  const [tempel, setTempel] = useState<string | null>(null) // null = kotak paste tertutup
+  const [infoTempel, setInfoTempel] = useState('')
+  // request setim: daftar rombongan (kunci pemain) yang dipakai saat acak; tidak disimpan ke Sheet
+  const [setim, setSetim] = useState<string[][]>([])
+  const [pilihSetim, setPilihSetim] = useState<string[] | null>(null)
 
   const n = namaTim.length
   const lama: Baris[] = data.pemain
@@ -140,16 +145,43 @@ function SesiForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk }, on
     setTugas((m) => new Map([...m].map(([k, t]) => [k, t === null || t === i ? null : t > i ? t - 1 : t])))
   }
 
+  const keBaru = (list: NamaTempel[]): PemainBaru[] => list.map((x, i) => ({ kunci: `baru:${Date.now()}-${i}`, nama: x.nama, posisi: x.kiper ? 'GK' : 'OUT' }))
+  const daftarkan = (list: PemainBaru[]) => {
+    setBaru((b) => [...list, ...b])
+    setTugas((m) => new Map([...m, ...list.map((b) => [b.kunci, null] as const)]))
+  }
+
   const tambahPemain = (e: FormEvent) => {
     e.preventDefault()
-    const nama = isianNama.trim().replace(/\s+/g, ' ')
-    if (!nama) return
-    const kembar = semua.find((p) => p.nama.toLowerCase() === nama.toLowerCase())
+    const [isian] = bacaDaftarNama(isianNama)
+    if (!isian) return
+    const kembar = semua.find((p) => p.nama.toLowerCase() === isian.nama.toLowerCase())
     if (kembar && !window.confirm(`"${kembar.nama}" sudah ada di daftar. Tetap tambahkan sebagai pemain baru?`)) return
-    const kunci = `baru:${Date.now()}`
-    setBaru([{ kunci, nama, posisi: 'MID' }, ...baru])
-    ubahTugas(kunci, null)
+    daftarkan(keBaru([isian]))
     setIsianNama('')
+  }
+
+  // Nama yang sudah terdaftar (nama lengkap atau panggilan) langsung dicentang hadir; sisanya jadi pemain baru.
+  const masukkanDaftar = () => {
+    const kenal = new Map<string, string>()
+    for (const p of data.pemain) for (const x of [p.nama, p.panggilan]) if (x && !kenal.has(x.toLowerCase())) kenal.set(x.toLowerCase(), p.id)
+    for (const b of baru) kenal.set(b.nama.toLowerCase(), b.kunci)
+    const daftar = bacaDaftarNama(tempel ?? '')
+    const lama = daftar.flatMap((x) => kenal.get(x.nama.toLowerCase()) ?? [])
+    const tambahan = keBaru(daftar.filter((x) => !kenal.has(x.nama.toLowerCase())))
+    const dicentang = lama.filter((k) => !tugas.has(k))
+    setTugas((m) => new Map([...m, ...dicentang.map((k) => [k, null] as const)]))
+    daftarkan(tambahan)
+    setInfoTempel(`${daftar.length} nama: ${lama.length} sudah terdaftar${dicentang.length < lama.length ? ` (${lama.length - dicentang.length} sudah dicentang)` : ''}, ${tambahan.length} pemain baru.`)
+    setTempel(null)
+  }
+
+  const namaDari = (kunci: string) => semua.find((p) => p.kunci === kunci)?.nama ?? kunci
+  const setimAktif = setim.map((g) => g.filter((k) => tugas.has(k))).filter((g) => g.length >= 2)
+  const sudahSetim = new Set(setimAktif.flat())
+  const simpanSetim = () => {
+    if (pilihSetim && pilihSetim.length >= 2) setSetim([...setimAktif, pilihSetim])
+    setPilihSetim(null)
   }
 
   const hapusPemainBaru = (kunci: string) => {
@@ -162,7 +194,12 @@ function SesiForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk }, on
     const kekuatan = new Map(stats.map((s) => [s.pemain.id, s.poinPerSesi]))
     const tengah = median(stats.map((s) => s.poinPerSesi))
     const hadir = semua.filter((p) => tugas.has(p.kunci))
-    const tim = bagiSeimbang(hadir.map((p) => ({ id: p.kunci, posisi: p.posisi, kekuatan: kekuatan.get(p.kunci) ?? tengah })), n)
+    const tim = bagiSeimbang(
+      hadir.map((p) => ({ id: p.kunci, posisi: p.posisi, kekuatan: kekuatan.get(p.kunci) ?? tengah })),
+      n,
+      Math.random,
+      setimAktif,
+    )
     setTugas(new Map(tim.flatMap((ids, i) => ids.map((id) => [id, i] as const))))
   }
 
@@ -248,6 +285,84 @@ function SesiForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk }, on
           + Tambah
         </button>
       </form>
+      {tempel === null ? (
+        <button type="button" className="btn-ghost adm-acak" onClick={() => setTempel('')}>
+          Paste daftar nama
+        </button>
+      ) : (
+        <div className="adm-paste">
+          <textarea
+            className="input"
+            rows={6}
+            autoFocus
+            value={tempel}
+            aria-label="Daftar nama"
+            placeholder={'Satu nama per baris, misalnya:\n1. Budi\n2. Buci\n3. Andi (GK)'}
+            onChange={(e) => setTempel(e.target.value)}
+          />
+          <div className="adm-paste-aksi">
+            <button type="button" className="btn-ghost" onClick={() => setTempel(null)}>
+              Batal
+            </button>
+            <button type="button" className="btn" disabled={bacaDaftarNama(tempel).length === 0} onClick={masukkanDaftar}>
+              Masukkan {bacaDaftarNama(tempel).length || ''} nama
+            </button>
+          </div>
+        </div>
+      )}
+      {infoTempel && <p className="adm-info">{infoTempel}</p>}
+
+      <section className="adm-card adm-setim">
+        <div className="adm-row-head">
+          <h2 className="disp adm-h">Request setim</h2>
+          <span className="lbl mute">Dipakai saat acak</span>
+        </div>
+        {setimAktif.length === 0 && pilihSetim === null && <p className="mute adm-setim-kosong">Belum ada. Contoh: Budi minta setim sama Buci.</p>}
+        {setimAktif.map((g, i) => (
+          <div key={g.join()} className="adm-setim-grup">
+            <span>{g.map(namaDari).join(' + ')}</span>
+            <button type="button" className="icon-btn" aria-label={`Hapus request ${g.map(namaDari).join(' + ')}`} onClick={() => setSetim(setimAktif.filter((_, j) => j !== i))}>
+              ✕
+            </button>
+          </div>
+        ))}
+        {pilihSetim === null ? (
+          <button type="button" className="btn-ghost adm-acak" disabled={tugas.size - sudahSetim.size < 2} onClick={() => setPilihSetim([])}>
+            + Request setim
+          </button>
+        ) : (
+          <>
+            <p className="lbl mute">Pilih pemain yang mau setim</p>
+            <div className="chips">
+              {semua
+                .filter((p) => tugas.has(p.kunci) && !sudahSetim.has(p.kunci))
+                .map((p) => {
+                  const on = pilihSetim.includes(p.kunci)
+                  return (
+                    <button
+                      key={p.kunci}
+                      type="button"
+                      className={on ? 'chip on' : 'chip'}
+                      aria-pressed={on}
+                      onClick={() => setPilihSetim((x) => (x?.includes(p.kunci) ? x.filter((k) => k !== p.kunci) : [...(x ?? []), p.kunci]))}
+                    >
+                      {p.nama}
+                    </button>
+                  )
+                })}
+            </div>
+            <div className="adm-paste-aksi">
+              <button type="button" className="btn-ghost" onClick={() => setPilihSetim(null)}>
+                Batal
+              </button>
+              <button type="button" className="btn" disabled={pilihSetim.length < 2} onClick={simpanSetim}>
+                Simpan setim
+              </button>
+            </div>
+          </>
+        )}
+      </section>
+
       <button type="button" className="btn-ghost adm-acak" disabled={tugas.size < n} onClick={acak}>
         ⇄ Acak tim seimbang
       </button>
@@ -262,7 +377,8 @@ function SesiForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk }, on
                   {hadir ? '✓' : ''}
                 </span>
                 <span className="adm-name">{p.nama}</span>
-                {p.baru ? <span className="badge-baru">Baru</span> : <span className="c-pos">{p.posisi}</span>}
+                {p.posisi === 'GK' && <span className="c-pos">Kiper</span>}
+                {p.baru && <span className="badge-baru">Baru</span>}
               </button>
               {hadir &&
                 (n <= MAKS_TOMBOL_TIM ? (

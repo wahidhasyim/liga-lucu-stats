@@ -15,7 +15,7 @@ Perubahan dari halaman admin langsung tersimpan ke sheet. Web publik ikut beruba
 
 Buka https://ligalucudepok.web.app/admin dari HP, lalu masukkan PIN.
 
-1. **Sebelum main, buka tab Sesi.** Pilih **+ Sesi baru**, lalu isi tanggal dan lokasi. Atur jumlah tim dengan **+ Tambah tim** atau ✕ (2–8 tim), dan beri nama tim sesukamu. Centang pemain yang hadir. Pemain yang belum terdaftar cukup diketik namanya, lalu tekan **+ Tambah**; saat sesi disimpan, pemain itu otomatis masuk daftar pemain dengan posisi MID (bisa diubah nanti di tab Pemain). Tekan **Acak tim seimbang** atau pilih tim tiap pemain satu per satu, lalu tekan **Buat sesi**.
+1. **Sebelum main, buka tab Sesi.** Pilih **+ Sesi baru**, lalu isi tanggal dan lokasi. Atur jumlah tim dengan **+ Tambah tim** atau ✕ (2–8 tim), dan beri nama tim sesukamu. Centang pemain yang hadir. Pemain yang belum terdaftar cukup diketik namanya, lalu tekan **+ Tambah**; saat sesi disimpan, pemain itu otomatis masuk daftar pemain sebagai outfield. Tambahkan `(GK)` di belakang nama untuk kiper. Kalau daftarnya banyak, tekan **Paste daftar nama** lalu tempel list dari WhatsApp, satu nama per baris: nama yang sudah terdaftar langsung dicentang, sisanya jadi pemain baru. Kalau ada yang minta setim (misalnya Budi sama Buci), tambahkan di **Request setim** sebelum mengacak. Tekan **Acak tim seimbang** atau pilih tim tiap pemain satu per satu, lalu tekan **Buat sesi**.
 2. **Setelah main, buka tab Hasil.** Isi skor tiap laga. Laga yang tidak jadi dimainkan bisa dihapus dengan ✕. Isi gol dan assist tiap pemain dengan tombol −/+, pilih MOTM dengan ★, lalu tekan **Simpan hasil**.
 3. **Ada anggota baru? Buka tab Pemain** dan tekan **+ Tambah pemain**. Anggota yang sudah tidak ikut bisa dinonaktifkan; riwayatnya tetap tersimpan.
 
@@ -34,7 +34,7 @@ Halaman admin sudah mengisi semua kolom ini. Bagian ini hanya perlu dibaca kalau
 | `id` | Kode unik, misalnya `P01`, `P02`. Jangan diganti setelah dipakai. |
 | `nama` | Nama lengkap. |
 | `panggilan` | Nama panggilan yang muncul di kartu pemain. |
-| `posisi` | Salah satu dari `GK`, `DEF`, `MID`, `FWD`. |
+| `posisi` | `GK` untuk kiper, `OUT` untuk outfield. Isian lain (misalnya `DEF`, `MID`, atau `FWD` dari data lama) dibaca sebagai outfield. |
 | `foto_url` | Link gambar yang bisa dibuka publik. Kosongkan kalau belum ada; web akan menampilkan inisial. |
 | `aktif` | `TRUE`, atau `FALSE` untuk menyembunyikan pemain yang sudah tidak ikut. Riwayatnya tetap tersimpan. |
 
@@ -83,7 +83,7 @@ Nilai poin untuk setiap aksi bisa diubah sesuka komunitas. Aksi yang tersedia: `
 
 Blok kolom yang mau diberi dropdown, lalu pilih **Data → Validasi data → Tambahkan aturan**:
 
-- `Pemain!D:D` (posisi): **Dropdown**, berisi `GK`, `DEF`, `MID`, `FWD`
+- `Pemain!D:D` (posisi): **Dropdown**, berisi `GK`, `OUT`
 - `Statistik!D:D` (hasil): **Dropdown**, berisi `M`, `S`, `K`
 - `Statistik!A:A` (sesi_id): **Dropdown (dari rentang)** `Sesi!A2:A`
 - `Statistik!B:B` (pemain_id): **Dropdown (dari rentang)** `Pemain!A2:A`

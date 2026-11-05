@@ -52,8 +52,8 @@ describe('parseLeague', () => {
   it('normalizes pemain and skips rows without id', () => {
     const { pemain } = parseLeague(raw())
     expect(pemain).toHaveLength(2)
-    expect(pemain[0]).toEqual({ id: 'P01', nama: 'Budi Santoso', panggilan: 'Budi', posisi: 'FWD', fotoUrl: '', aktif: true })
-    expect(pemain[1]).toMatchObject({ panggilan: 'Raka', posisi: 'MID', aktif: false })
+    expect(pemain[0]).toEqual({ id: 'P01', nama: 'Budi Santoso', panggilan: 'Budi', posisi: 'OUT', fotoUrl: '', aktif: true })
+    expect(pemain[1]).toMatchObject({ panggilan: 'Raka', posisi: 'OUT', aktif: false })
   })
 
   it('sorts sesi by tanggal and numbers pekan', () => {
