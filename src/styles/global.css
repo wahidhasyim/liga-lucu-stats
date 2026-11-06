@@ -316,3 +316,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .poster-gk { flex-shrink: 0; margin-left: auto; padding: 0 4px; background: var(--gold); color: var(--bg); font-size: 9px; font-weight: 800; letter-spacing: 0.1em; }
 .poster-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 14px; letter-spacing: 0.2em; }
 @media (min-width: 640px) { .poster { padding: 28px; } .poster-title { font-size: 88px; } }
+.share { margin: 0 0 48px; }
+.share-aksi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.share-aksi .btn, .share-aksi .btn-ghost { padding-inline: 8px; }
+.share-pesan { margin: 10px 0 0; font-size: 13px; }
+.share-pratinjau { display: flex; gap: 8px; margin-top: 14px; overflow-x: auto; padding-bottom: 6px; }
+.share-pratinjau a { flex-shrink: 0; border: 1px solid var(--line); }
+.share-pratinjau img { height: 150px; width: auto; }

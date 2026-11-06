@@ -1,13 +1,15 @@
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useLeague } from '../components/Layout'
 import { PlayerPhoto } from '../components/PlayerPhoto'
 import { StandingTable } from '../components/StandingTable'
 import { EmptyState, NotFound } from '../components/StatusStates'
 import { kunciTim } from '../data/parse'
-import type { CSSProperties } from 'react'
 import type { Laga, Sesi } from '../data/types'
 import { formatAngka, formatTanggal, isoHariIni, POSISI_LABEL } from '../lib/format'
-import { barisSesi, lagaSesi, lineupSesi, standingSesi, sudahMain, type BarisSesi, type BarisStanding } from '../stats/compute'
+import { bagikan, gambarFeed, gambarStory, type DataGambar } from '../lib/gambarLineup'
+import { warnaTim } from '../lib/warnaTim'
+import { barisSesi, lagaSesi, lineupSesi, standingSesi, sudahMain, type BarisSesi, type BarisStanding, type TimLineup } from '../stats/compute'
 
 interface Grup {
   judul: string
@@ -72,20 +74,68 @@ function BarisPemain({ b }: { b: BarisSesi }) {
   )
 }
 
-const WARNA_TIM: [RegExp, string][] = [
-  [/merah|red/, '#e5484d'],
-  [/biru|blue/, '#3e8ef7'],
-  [/kuning|yellow/, '#f5d90a'],
-  [/hijau|green/, '#30a46c'],
-  [/oranye|orange|jingga/, '#f76b15'],
-  [/ungu|purple/, '#8e4ec6'],
-  [/pink|merah muda/, '#e93d82'],
-  [/putih|white/, '#f4f1ea'],
-  [/hitam|black/, '#5c5c5c'],
-  [/abu|grey|gray/, '#9b9b9b'],
-]
-// Warna aksen dari nama tim ("Tim Merah" → merah); selain itu emas.
-const warnaTim = (nama: string) => WARNA_TIM.find(([re]) => re.test(nama.toLowerCase()))?.[1] ?? 'var(--gold)'
+// Gambar story dan feed dibuat begitu halaman dibuka, supaya menu share HP bisa langsung muncul saat tombol diketuk.
+function BagikanLineup({ sesi, lineup }: { sesi: Sesi; lineup: TimLineup[] }) {
+  const [gambar, setGambar] = useState<{ story: File; feed: File[] } | null>(null)
+  const [pesan, setPesan] = useState('')
+  const dataGambar = useMemo<DataGambar>(
+    () => ({
+      pekan: sesi.pekan,
+      tanggal: formatTanggal(sesi.tanggal),
+      info: [sesi.lokasi, sesi.catatan].filter(Boolean).join(' · '),
+      tim: lineup.filter((g) => g.tim).map((g) => ({ nama: g.tim, warna: warnaTim(g.tim), pemain: g.pemain.map((p) => ({ nama: p.nama, kiper: p.posisi === 'GK' })) })),
+    }),
+    [sesi, lineup],
+  )
+  const kunci = JSON.stringify(dataGambar)
+
+  // kunci mewakili isi dataGambar; objeknya sendiri dibuat ulang tiap render
+  useEffect(() => {
+    let batal = false
+    setGambar(null)
+    Promise.all([gambarStory(dataGambar), gambarFeed(dataGambar)])
+      .then(([story, feed]) => !batal && setGambar({ story, feed }))
+      .catch(() => !batal && setPesan('Gambar gagal dibuat. Coba muat ulang halaman.'))
+    return () => {
+      batal = true
+    }
+  }, [kunci])
+
+  const pratinjau = useMemo(() => (gambar ? [gambar.story, ...gambar.feed].map((f) => ({ nama: f.name, url: URL.createObjectURL(f) })) : []), [gambar])
+  useEffect(() => () => pratinjau.forEach((p) => URL.revokeObjectURL(p.url)), [pratinjau])
+
+  if (dataGambar.tim.length === 0) return null
+  const kirim = async (files: File[]) => {
+    const hasil = await bagikan(files, `Line-up Pekan ${sesi.pekan} · Liga Lucu Depok`)
+    setPesan(hasil === 'diunduh' ? `${files.length} gambar diunduh.` : '')
+  }
+  return (
+    <section className="share">
+      <div className="sec-head">
+        <h2 className="disp">Bagikan ke IG</h2>
+        <span className="lbl mute">{gambar ? 'Siap' : 'Menyiapkan…'}</span>
+      </div>
+      <div className="share-aksi">
+        <button type="button" className="btn" disabled={!gambar} onClick={() => gambar && kirim([gambar.story])}>
+          Story · 9:16
+        </button>
+        <button type="button" className="btn-ghost" disabled={!gambar} onClick={() => gambar && kirim(gambar.feed)}>
+          Feed · {dataGambar.tim.length} foto 4:5
+        </button>
+      </div>
+      {pesan && <p className="mute share-pesan">{pesan}</p>}
+      {pratinjau.length > 0 && (
+        <div className="share-pratinjau">
+          {pratinjau.map((p, i) => (
+            <a key={p.nama} href={p.url} download={p.nama} className={i === 0 ? 'story' : ''}>
+              <img src={p.url} alt={i === 0 ? 'Pratinjau story' : `Pratinjau feed ${i}`} />
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
 
 // Sesi yang belum dimainkan: poster line-up yang muat satu layar, enak di-screenshot untuk IG.
 function PosterLineup({ sesi }: { sesi: Sesi }) {
@@ -94,50 +144,53 @@ function PosterLineup({ sesi }: { sesi: Sesi }) {
   const total = lineup.reduce((n, g) => n + g.pemain.length, 0)
   const jumlahTim = lineup.filter((g) => g.tim).length
   return (
-    <article className="poster">
-      <header className="poster-head">
-        <img src="/logo.svg" alt="" width={44} height={44} />
-        <div>
-          <div className="lbl">Liga Lucu Depok</div>
-          <div className="lbl gold">Line-up</div>
+    <>
+      <article className="poster">
+        <header className="poster-head">
+          <img src="/logo.svg" alt="" width={44} height={44} />
+          <div>
+            <div className="lbl">Liga Lucu Depok</div>
+            <div className="lbl gold">Line-up</div>
+          </div>
+          <span className="poster-tag lbl">Akan datang</span>
+        </header>
+        <h1 className="disp poster-title">Pekan {sesi.pekan}</h1>
+        <div className="poster-info">
+          <span className="lbl gold">{formatTanggal(sesi.tanggal)}</span>
+          <span>{[sesi.lokasi, sesi.catatan].filter(Boolean).join(' · ')}</span>
+          <span className="lbl mute">
+            {total} pemain · {jumlahTim} tim
+          </span>
         </div>
-        <span className="poster-tag lbl">Akan datang</span>
-      </header>
-      <h1 className="disp poster-title">Pekan {sesi.pekan}</h1>
-      <div className="poster-info">
-        <span className="lbl gold">{formatTanggal(sesi.tanggal)}</span>
-        <span>{[sesi.lokasi, sesi.catatan].filter(Boolean).join(' · ')}</span>
-        <span className="lbl mute">
-          {total} pemain · {jumlahTim} tim
-        </span>
-      </div>
-      {lineup.length === 0 ? (
-        <EmptyState judul="Line-up belum disusun" pesan="Admin belum mendaftarkan pemain untuk sesi ini." />
-      ) : (
-        <div className="poster-grid">
-          {lineup.map((g) => (
-            <section key={g.tim || '-'} className={g.tim ? 'poster-tim' : 'poster-tim tanpa'} style={{ '--warna': g.tim ? warnaTim(g.tim) : 'var(--mute)' } as CSSProperties}>
-              <h2 className="disp">
-                <span>{g.tim || 'Belum dapat tim'}</span>
-                <span className="poster-n">{g.pemain.length}</span>
-              </h2>
-              <ol>
-                {g.pemain.map((p) => (
-                  <li key={p.id}>
-                    <Link to={`/pemain/${p.id}`}>{p.nama}</Link>
-                    {p.posisi === 'GK' && <span className="poster-gk">GK</span>}
-                  </li>
-                ))}
-              </ol>
-            </section>
-          ))}
-        </div>
-      )}
-      <footer className="poster-foot lbl mute">
-        <span>ligalucudepok.web.app</span>
-        <span className="gold">Fun football tiap weekend</span>
-      </footer>
-    </article>
+        {lineup.length === 0 ? (
+          <EmptyState judul="Line-up belum disusun" pesan="Admin belum mendaftarkan pemain untuk sesi ini." />
+        ) : (
+          <div className="poster-grid">
+            {lineup.map((g) => (
+              <section key={g.tim || '-'} className={g.tim ? 'poster-tim' : 'poster-tim tanpa'} style={{ '--warna': g.tim ? warnaTim(g.tim) : 'var(--mute)' } as CSSProperties}>
+                <h2 className="disp">
+                  <span>{g.tim || 'Belum dapat tim'}</span>
+                  <span className="poster-n">{g.pemain.length}</span>
+                </h2>
+                <ol>
+                  {g.pemain.map((p) => (
+                    <li key={p.id}>
+                      <Link to={`/pemain/${p.id}`}>{p.nama}</Link>
+                      {p.posisi === 'GK' && <span className="poster-gk">GK</span>}
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            ))}
+          </div>
+        )}
+        <footer className="poster-foot lbl mute">
+          <span>ligalucudepok.web.app</span>
+          <span className="gold">Fun football tiap weekend</span>
+        </footer>
+      </article>
+      <BagikanLineup sesi={sesi} lineup={lineup} />
+    </>
   )
 }
 
