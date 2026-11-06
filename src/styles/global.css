@@ -293,3 +293,26 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .savebar-msg.ok { color: var(--gold); }
 .savebar-msg.error { color: #e8826b; }
 .savebar-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* poster line-up sesi yang akan datang: muat satu layar HP untuk di-screenshot */
+.poster { position: relative; overflow: hidden; margin: 4px 0 40px; padding: 18px 16px 14px; border: 1px solid rgba(201, 162, 77, 0.55); background: radial-gradient(ellipse 90% 55% at 50% 0%, rgba(201, 162, 77, 0.18), transparent 70%), var(--panel); }
+.poster::after { content: ""; position: absolute; inset: auto 0 0 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+.poster-head { display: flex; align-items: center; gap: 10px; }
+.poster-head .lbl { line-height: 1.5; }
+.poster-tag { margin-left: auto; padding: 4px 8px; border: 1px solid var(--gold); color: var(--gold); letter-spacing: 0.22em; }
+.poster-title { margin: 16px 0 6px; font-size: 64px; line-height: 0.85; }
+.poster-info { display: grid; gap: 2px; margin-bottom: 16px; font-size: 13px; }
+.poster-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.poster-tim { min-width: 0; padding: 10px 10px 8px; border-top: 3px solid var(--warna); background: rgba(0, 0, 0, 0.35); }
+.poster-tim.tanpa { grid-column: 1 / -1; border-top-style: dashed; }
+.poster-tim h2 { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 6px; font-size: 21px; }
+.poster-tim h2 span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.poster-n { color: var(--warna); font-size: 18px; }
+.poster-tim ol { margin: 0; padding: 0; list-style: none; counter-reset: no; }
+.poster-tim li { display: flex; align-items: baseline; gap: 6px; padding: 3px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 13px; font-weight: 600; line-height: 1.3; counter-increment: no; }
+.poster-tim li:last-child { border-bottom: 0; }
+.poster-tim li::before { content: counter(no); flex-shrink: 0; width: 14px; color: var(--mute); font-size: 10px; font-weight: 700; text-align: right; }
+.poster-tim li a { min-width: 0; overflow-wrap: anywhere; }
+.poster-gk { flex-shrink: 0; margin-left: auto; padding: 0 4px; background: var(--gold); color: var(--bg); font-size: 9px; font-weight: 800; letter-spacing: 0.1em; }
+.poster-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 14px; letter-spacing: 0.2em; }
+@media (min-width: 640px) { .poster { padding: 28px; } .poster-title { font-size: 88px; } }
