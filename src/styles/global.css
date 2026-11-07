@@ -127,8 +127,11 @@ h1, h2, h3 { margin: 0; font-weight: 400; }
 .laga-tim.nanti { color: var(--ink); font-weight: 600; }
 .laga-vs { min-width: 56px; text-align: center; color: var(--gold); }
 .laga-no { text-align: right; letter-spacing: 0; }
-.laga-list.berjam .laga-row { grid-template-columns: 76px 1fr auto 1fr; gap: 8px; }
+.laga-list.berjam .laga-row { grid-template-columns: 70px 1fr auto 1fr; gap: 8px; font-size: 13px; }
+.laga-list.berjam .laga-no { font-size: 10px; }
 .laga-list.berjam .laga-vs { min-width: 28px; }
+.laga-list.berjam .laga-skor { min-width: 44px; }
+.laga-list.berjam .laga-tim::before { margin-right: 5px; }
 .laga-list.berjam .laga-no { color: var(--gold); text-align: left; }
 .laga-catatan { margin: 10px 0 0; font-size: 13px; }
 .laga-tim.win { color: var(--ink); font-weight: 700; }

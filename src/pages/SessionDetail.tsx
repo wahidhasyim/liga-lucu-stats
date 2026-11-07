@@ -291,7 +291,7 @@ export default function SessionDetail() {
               <h2 className="disp">{belumMain ? 'Jadwal & hasil' : 'Hasil laga'}</h2>
               <span className="lbl mute">{belumMain ? `${laga.length}/${jadwal.length} dimainkan` : `${laga.length} laga`}</span>
             </div>
-            <DaftarLaga laga={jadwal} />
+            <DaftarLaga laga={jadwal} jam={jamLaga(sesi.catatan, jadwal.length)} />
           </section>
         </>
       )}
