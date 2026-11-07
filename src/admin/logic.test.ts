@@ -1,25 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bacaDaftarNama, bagiSeimbang, cekGolTim, jadwalRoundRobin, median, type Kandidat } from './logic'
-
-describe('jadwalRoundRobin', () => {
-  it('pairs every team exactly once', () => {
-    const jadwal = jadwalRoundRobin(['A', 'B', 'C', 'D'])
-    expect(jadwal).toHaveLength(6)
-    const pasangan = jadwal.map((p) => [...p].sort().join('-')).sort()
-    expect(pasangan).toEqual(['A-B', 'A-C', 'A-D', 'B-C', 'B-D', 'C-D'])
-  })
-
-  it('plays round by round so no team plays twice in a row within a round', () => {
-    const jadwal = jadwalRoundRobin(['A', 'B', 'C', 'D'])
-    for (let i = 0; i < 6; i += 2) expect(new Set([...jadwal[i], ...jadwal[i + 1]]).size).toBe(4)
-  })
-
-  it('handles odd and tiny team counts', () => {
-    expect(jadwalRoundRobin(['A', 'B', 'C'])).toHaveLength(3)
-    expect(jadwalRoundRobin(['A', 'B'])).toEqual([['A', 'B']])
-    expect(jadwalRoundRobin(['A'])).toEqual([])
-  })
-})
+import { bacaDaftarNama, bagiSeimbang, cekGolTim, median, type Kandidat } from './logic'
 
 describe('bagiSeimbang', () => {
   const p = (id: string, kekuatan: number, posisi: Kandidat['posisi'] = 'OUT'): Kandidat => ({ id, posisi, kekuatan })

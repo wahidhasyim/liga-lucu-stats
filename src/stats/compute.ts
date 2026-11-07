@@ -1,5 +1,5 @@
 import { kunciTim } from '../data/parse'
-import type { BarisStat, Laga, LeagueData, Pemain, Poin, Sesi } from '../data/types'
+import type { BarisStat, JadwalLaga, Laga, LeagueData, Pemain, Poin, Sesi } from '../data/types'
 
 export type Rentang = 'semua' | 'bulan-ini'
 
@@ -199,4 +199,32 @@ export function lineupSesi(data: LeagueData, sesiId: string): TimLineup[] {
   }
   for (const g of grup) g.pemain.sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
   return [...grup.filter((g) => g.tim), ...grup.filter((g) => !g.tim)]
+}
+
+// Jadwal setengah kompetisi dengan metode lingkaran, per putaran, supaya tim tidak main beruntun bila bisa.
+export function jadwalRoundRobin(tim: string[]): [string, string][] {
+  const slot: (string | null)[] = tim.length % 2 ? [...tim, null] : [...tim]
+  const n = slot.length
+  const out: [string, string][] = []
+  for (let putaran = 0; putaran < n - 1; putaran++) {
+    for (let i = 0; i < n / 2; i++) {
+      const a = slot[i]
+      const b = slot[n - 1 - i]
+      if (a !== null && b !== null) out.push([a, b])
+    }
+    // tim pertama tetap, sisanya berputar
+    slot.splice(1, 0, slot.pop()!)
+  }
+  return out
+}
+
+// Jadwal laga sesi: yang disimpan admin di tab Laga, atau round-robin dari tim di line-up kalau belum ada.
+// Urutan tim sama dengan di tab Hasil admin, jadi jadwal otomatis ini cocok dengan yang nanti dibuat admin.
+export function jadwalSesi(data: LeagueData, sesiId: string): { laga: JadwalLaga[]; otomatis: boolean } {
+  const tersimpan = data.jadwal.filter((l) => l.sesiId === sesiId)
+  if (tersimpan.length > 0) return { laga: tersimpan, otomatis: false }
+  const tim = lineupSesi(data, sesiId)
+    .filter((g) => g.tim)
+    .map((g) => g.tim)
+  return { laga: jadwalRoundRobin(tim).map(([timA, timB]) => ({ sesiId, timA, timB, skorA: null, skorB: null })), otomatis: true }
 }

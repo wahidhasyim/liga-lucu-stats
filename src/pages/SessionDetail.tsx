@@ -5,11 +5,11 @@ import { PlayerPhoto } from '../components/PlayerPhoto'
 import { StandingTable } from '../components/StandingTable'
 import { EmptyState, NotFound } from '../components/StatusStates'
 import { kunciTim } from '../data/parse'
-import type { Laga, Sesi } from '../data/types'
+import type { JadwalLaga, Sesi } from '../data/types'
 import { formatAngka, formatTanggal, isoHariIni, POSISI_LABEL } from '../lib/format'
 import { bagikan, gambarFeed, gambarStory, type DataGambar } from '../lib/gambarLineup'
 import { warnaTim } from '../lib/warnaTim'
-import { barisSesi, lagaSesi, lineupSesi, standingSesi, sudahMain, type BarisSesi, type BarisStanding, type TimLineup } from '../stats/compute'
+import { barisSesi, jadwalSesi, lagaSesi, lineupSesi, standingSesi, sudahMain, type BarisSesi, type BarisStanding, type TimLineup } from '../stats/compute'
 
 interface Grup {
   judul: string
@@ -38,19 +38,33 @@ function grupTim(baris: BarisSesi[], standing: BarisStanding[]): Grup[] {
   return grup
 }
 
-function HasilLaga({ laga }: { laga: Laga[] }) {
+// Laga yang sudah main menampilkan skor; yang belum menampilkan "vs".
+function DaftarLaga({ laga }: { laga: JadwalLaga[] }) {
   return (
-    <div className="laga-list">
-      {laga.map((l, i) => (
-        <div key={i} className="laga-row">
-          <span className={l.skorA > l.skorB ? 'laga-tim win' : 'laga-tim'}>{l.timA}</span>
-          <span className="disp laga-skor">
-            {l.skorA}–{l.skorB}
-          </span>
-          <span className={l.skorB > l.skorA ? 'laga-tim win' : 'laga-tim'}>{l.timB}</span>
-        </div>
-      ))}
-    </div>
+    <ol className="laga-list">
+      {laga.map((l, i) => {
+        const main = l.skorA !== null && l.skorB !== null
+        const kelas = (menang: boolean) => (main ? (menang ? 'laga-tim win' : 'laga-tim') : 'laga-tim nanti')
+        return (
+          <li key={i} className="laga-row">
+            <span className="laga-no lbl mute">{i + 1}</span>
+            <span className={kelas(main && l.skorA! > l.skorB!)} style={{ '--warna': warnaTim(l.timA) } as CSSProperties}>
+              {l.timA}
+            </span>
+            {main ? (
+              <span className="disp laga-skor">
+                {l.skorA}–{l.skorB}
+              </span>
+            ) : (
+              <span className="lbl laga-vs">vs</span>
+            )}
+            <span className={kelas(main && l.skorB! > l.skorA!)} style={{ '--warna': warnaTim(l.timB) } as CSSProperties}>
+              {l.timB}
+            </span>
+          </li>
+        )
+      })}
+    </ol>
   )
 }
 
@@ -141,6 +155,7 @@ function BagikanLineup({ sesi, lineup }: { sesi: Sesi; lineup: TimLineup[] }) {
 function PosterLineup({ sesi }: { sesi: Sesi }) {
   const data = useLeague()
   const lineup = lineupSesi(data, sesi.id)
+  const jadwal = jadwalSesi(data, sesi.id)
   const total = lineup.reduce((n, g) => n + g.pemain.length, 0)
   const jumlahTim = lineup.filter((g) => g.tim).length
   return (
@@ -189,6 +204,16 @@ function PosterLineup({ sesi }: { sesi: Sesi }) {
           <span className="gold">Fun football tiap weekend</span>
         </footer>
       </article>
+      {jadwal.laga.length > 0 && (
+        <section className="block">
+          <div className="sec-head">
+            <h2 className="disp">Jadwal laga</h2>
+            <span className="lbl mute">{jadwal.laga.length} laga</span>
+          </div>
+          <DaftarLaga laga={jadwal.laga} />
+          {jadwal.otomatis && <p className="mute laga-catatan">Urutan sementara, tiap tim bertemu sekali. Bisa berubah di lapangan.</p>}
+        </section>
+      )}
       <BagikanLineup sesi={sesi} lineup={lineup} />
     </>
   )
@@ -204,6 +229,8 @@ export default function SessionDetail() {
   const gol = baris.reduce((n, b) => n + b.baris.gol, 0)
   const assist = baris.reduce((n, b) => n + b.baris.assist, 0)
   const laga = lagaSesi(data, sesi.id)
+  const jadwal = jadwalSesi(data, sesi.id).laga
+  const belumMain = jadwal.filter((l) => l.skorA === null).length
   const standing = standingSesi(laga)
   const grup = laga.length > 0 ? grupTim(baris, standing) : grupHasil(baris)
   if (sesi.tanggal >= isoHariIni() && !sudahMain(data, sesi.id))
@@ -252,10 +279,10 @@ export default function SessionDetail() {
           </section>
           <section className="block">
             <div className="sec-head">
-              <h2 className="disp">Hasil laga</h2>
-              <span className="lbl mute">{laga.length} laga</span>
+              <h2 className="disp">{belumMain ? 'Jadwal & hasil' : 'Hasil laga'}</h2>
+              <span className="lbl mute">{belumMain ? `${laga.length}/${jadwal.length} dimainkan` : `${laga.length} laga`}</span>
             </div>
-            <HasilLaga laga={laga} />
+            <DaftarLaga laga={jadwal} />
           </section>
         </>
       )}

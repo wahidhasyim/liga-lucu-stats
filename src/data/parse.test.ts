@@ -100,7 +100,7 @@ describe('parseLeague', () => {
 
   it('parses laga, skipping unplayed, unknown-sesi and nameless rows', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { laga } = parseLeague(
+    const { laga, jadwal } = parseLeague(
       raw({
         laga: [
           { sesi_id: 'S001', tim_a: ' Tim  Budi ', skor_a: '2', skor_b: '1', tim_b: 'Galacticos' },
@@ -112,6 +112,11 @@ describe('parseLeague', () => {
       }),
     )
     expect(laga).toEqual([{ sesiId: 'S001', timA: 'Tim Budi', skorA: 2, skorB: 1, timB: 'Galacticos' }])
+    // jadwal juga memuat laga yang belum dimainkan, dalam urutan Sheet
+    expect(jadwal).toEqual([
+      { sesiId: 'S001', timA: 'Tim Budi', timB: 'Galacticos', skorA: 2, skorB: 1 },
+      { sesiId: 'S001', timA: 'Tim Budi', timB: 'Los Lucu', skorA: null, skorB: null },
+    ])
     expect(warn).toHaveBeenCalledTimes(3)
   })
 

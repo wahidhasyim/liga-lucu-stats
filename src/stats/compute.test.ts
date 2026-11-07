@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BarisStat, Hasil, Laga, LeagueData, Pemain, Sesi } from '../data/types'
-import { barisSesi, compareDefault, computePlayerStats, isStatKey, lineupSesi, poinBaris, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
+import { barisSesi, compareDefault, computePlayerStats, isStatKey, jadwalRoundRobin, jadwalSesi, lineupSesi, poinBaris, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
 
 const pemain = (id: string, nama: string, aktif = true): Pemain => ({ id, nama, panggilan: nama, posisi: 'OUT', fotoUrl: '', aktif })
 const sesi = (id: string, tanggal: string, pekan: number): Sesi => ({ id, tanggal, lokasi: '', catatan: '', pekan })
@@ -30,6 +30,7 @@ const data: LeagueData = {
     baris('S2', 'C', 'M', 1), // 1+3+2 = 6
   ],
   laga: [],
+  jadwal: [],
   poin: POIN,
 }
 
@@ -201,5 +202,45 @@ describe('sesi akan datang & line-up', () => {
       ['Tim Merah', ['A']],
       ['', ['E']],
     ])
+  })
+})
+
+describe('jadwalRoundRobin', () => {
+  it('pairs every team exactly once', () => {
+    const jadwal = jadwalRoundRobin(['A', 'B', 'C', 'D'])
+    expect(jadwal).toHaveLength(6)
+    const pasangan = jadwal.map((p) => [...p].sort().join('-')).sort()
+    expect(pasangan).toEqual(['A-B', 'A-C', 'A-D', 'B-C', 'B-D', 'C-D'])
+  })
+
+  it('plays round by round so no team plays twice in a row within a round', () => {
+    const jadwal = jadwalRoundRobin(['A', 'B', 'C', 'D'])
+    for (let i = 0; i < 6; i += 2) expect(new Set([...jadwal[i], ...jadwal[i + 1]]).size).toBe(4)
+  })
+
+  it('handles odd and tiny team counts', () => {
+    expect(jadwalRoundRobin(['A', 'B', 'C'])).toHaveLength(3)
+    expect(jadwalRoundRobin(['A', 'B'])).toEqual([['A', 'B']])
+    expect(jadwalRoundRobin(['A'])).toEqual([])
+  })
+})
+
+describe('jadwalSesi', () => {
+  const lineup = (pemainId: string, tim: string): BarisStat => ({ ...baris('S3', pemainId, null), tim })
+  const dasar: LeagueData = { ...data, sesi: [...data.sesi, sesi('S3', '2026-11-08', 3)], statistik: [lineup('A', 'Merah'), lineup('B', 'Biru'), lineup('C', 'Putih')] }
+
+  it('builds a round robin from the lineup teams when nothing is saved', () => {
+    const { laga, otomatis } = jadwalSesi(dasar, 'S3')
+    expect(otomatis).toBe(true)
+    expect(laga.map((l) => `${l.timA}-${l.timB}`)).toEqual(jadwalRoundRobin(['Merah', 'Biru', 'Putih']).map(([a, b]) => `${a}-${b}`))
+    expect(laga.every((l) => l.skorA === null)).toBe(true)
+  })
+
+  it('uses the saved schedule, played or not, in sheet order', () => {
+    const jadwal = [
+      { sesiId: 'S3', timA: 'Biru', timB: 'Putih', skorA: 2, skorB: 1 },
+      { sesiId: 'S3', timA: 'Merah', timB: 'Biru', skorA: null, skorB: null },
+    ]
+    expect(jadwalSesi({ ...dasar, jadwal }, 'S3')).toEqual({ laga: jadwal, otomatis: false })
   })
 })

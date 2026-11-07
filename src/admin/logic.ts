@@ -1,23 +1,6 @@
 import { kunciTim } from '../data/parse'
 import type { Posisi } from '../data/types'
 
-// Jadwal setengah kompetisi dengan metode lingkaran, per putaran, supaya tim tidak main beruntun bila bisa.
-export function jadwalRoundRobin(tim: string[]): [string, string][] {
-  const slot: (string | null)[] = tim.length % 2 ? [...tim, null] : [...tim]
-  const n = slot.length
-  const out: [string, string][] = []
-  for (let putaran = 0; putaran < n - 1; putaran++) {
-    for (let i = 0; i < n / 2; i++) {
-      const a = slot[i]
-      const b = slot[n - 1 - i]
-      if (a !== null && b !== null) out.push([a, b])
-    }
-    // tim pertama tetap, sisanya berputar
-    slot.splice(1, 0, slot.pop()!)
-  }
-  return out
-}
-
 export interface Kandidat {
   id: string
   posisi: Posisi

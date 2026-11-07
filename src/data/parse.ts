@@ -1,4 +1,4 @@
-import { type BarisStat, type Hasil, type Laga, type LeagueData, type Pemain, type Poin, type Posisi, type RawTables, type Row, type Sesi } from './types'
+import { type BarisStat, type Hasil, type JadwalLaga, type Laga, type LeagueData, type Pemain, type Poin, type Posisi, type RawTables, type Row, type Sesi } from './types'
 
 export const kePosisi = (nilai: string): Posisi => (['GK', 'KIPER', 'KEEPER'].includes(nilai.trim().toUpperCase()) ? 'GK' : 'OUT')
 
@@ -73,8 +73,9 @@ function parseSesi(rows: Row[]): Sesi[] {
   return valid.map((s, i) => ({ ...s, pekan: i + 1 }))
 }
 
-function parseLaga(rows: Row[], sesiIds: Set<string>): Laga[] {
+function parseLaga(rows: Row[], sesiIds: Set<string>): { laga: Laga[]; jadwal: JadwalLaga[] } {
   const out: Laga[] = []
+  const jadwal: JadwalLaga[] = []
   rows.forEach((r, i) => {
     const sesiId = str(r.sesi_id)
     const timA = str(r.tim_a).replace(/\s+/g, ' ')
@@ -88,8 +89,11 @@ function parseLaga(rows: Row[], sesiIds: Set<string>): Laga[] {
       console.warn(`[laga] baris ${i + 2}: nama tim kosong, dilewati`)
       return
     }
-    // skor kosong = laga belum dimainkan
-    if (str(r.skor_a) === '' || str(r.skor_b) === '') return
+    // skor kosong = laga belum dimainkan; tetap masuk jadwal
+    if (str(r.skor_a) === '' || str(r.skor_b) === '') {
+      jadwal.push({ sesiId, timA, timB, skorA: null, skorB: null })
+      return
+    }
     const skorA = toSkor(r.skor_a)
     const skorB = toSkor(r.skor_b)
     if (skorA === null || skorB === null) {
@@ -97,8 +101,9 @@ function parseLaga(rows: Row[], sesiIds: Set<string>): Laga[] {
       return
     }
     out.push({ sesiId, timA, skorA, skorB, timB })
+    jadwal.push({ sesiId, timA, timB, skorA, skorB })
   })
-  return out
+  return { laga: out, jadwal }
 }
 
 function toSkor(v: string | undefined): number | null {
@@ -164,7 +169,7 @@ export function parseLeague(raw: RawTables): LeagueData {
   const pemain = parsePemain(raw.pemain)
   const sesi = parseSesi(raw.sesi)
   const sesiIds = new Set(sesi.map((s) => s.id))
-  const laga = parseLaga(raw.laga, sesiIds)
+  const { laga, jadwal } = parseLaga(raw.laga, sesiIds)
   const statistik = parseStatistik(raw.statistik, new Set(pemain.map((p) => p.id)), sesiIds, laga)
-  return { pemain, sesi, statistik, laga, poin: parsePoin(raw.poin) }
+  return { pemain, sesi, statistik, laga, jadwal, poin: parsePoin(raw.poin) }
 }

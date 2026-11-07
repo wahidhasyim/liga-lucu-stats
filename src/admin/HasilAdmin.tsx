@@ -3,8 +3,9 @@ import { EmptyState } from '../components/StatusStates'
 import { kunciTim } from '../data/parse'
 import type { LeagueData } from '../data/types'
 import { formatTanggalPendek } from '../lib/format'
+import { jadwalRoundRobin } from '../stats/compute'
 import type { Kirim } from './AdminPage'
-import { cekGolTim, jadwalRoundRobin, type LagaInput } from './logic'
+import { cekGolTim, type LagaInput } from './logic'
 import { Field, SaveBar, Stepper, useSimpan } from './ui'
 
 interface Isian {
@@ -40,7 +41,8 @@ function HasilForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk } }:
     const baris = data.statistik.filter((b) => b.sesiId === sesiId)
     const tim: string[] = []
     for (const b of baris) if (b.tim && !tim.some((t) => kunciTim(t) === kunciTim(b.tim))) tim.push(b.tim)
-    const lagaLama = data.laga.filter((l) => l.sesiId === sesiId).map((l) => ({ timA: l.timA, skorA: String(l.skorA), skorB: String(l.skorB), timB: l.timB }))
+    // jadwal = semua laga tersimpan, termasuk yang skornya belum diisi
+    const lagaLama = data.jadwal.filter((l) => l.sesiId === sesiId).map((l) => ({ timA: l.timA, skorA: l.skorA === null ? '' : String(l.skorA), skorB: l.skorB === null ? '' : String(l.skorB), timB: l.timB }))
     const laga: LagaInput[] = lagaLama.length > 0 ? lagaLama : jadwalRoundRobin(tim).map(([timA, timB]) => ({ timA, skorA: '', skorB: '', timB }))
     const isian = new Map(baris.map((b) => [b.pemainId, { gol: b.gol, assist: b.assist, motm: b.motm }]))
     return { baris, tim, laga, isian }

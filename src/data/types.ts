@@ -44,13 +44,23 @@ export interface Laga {
   timB: string
 }
 
+// Satu baris tab Laga, termasuk yang belum dimainkan (skor null), dalam urutan di Sheet.
+export interface JadwalLaga {
+  sesiId: string
+  timA: string
+  timB: string
+  skorA: number | null
+  skorB: number | null
+}
+
 export type Poin = Record<string, number>
 
 export interface LeagueData {
   pemain: Pemain[]
   sesi: Sesi[]
   statistik: BarisStat[]
-  laga: Laga[]
+  laga: Laga[] // hanya yang sudah dimainkan
+  jadwal: JadwalLaga[]
   poin: Poin
 }
 
