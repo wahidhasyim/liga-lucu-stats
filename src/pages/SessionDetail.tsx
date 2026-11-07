@@ -89,7 +89,7 @@ function BarisPemain({ b }: { b: BarisSesi }) {
 }
 
 // Gambar story dan feed dibuat begitu halaman dibuka, supaya menu share HP bisa langsung muncul saat tombol diketuk.
-function BagikanLineup({ sesi, lineup }: { sesi: Sesi; lineup: TimLineup[] }) {
+function BagikanLineup({ sesi, lineup, jadwal }: { sesi: Sesi; lineup: TimLineup[]; jadwal: { laga: JadwalLaga[]; otomatis: boolean } }) {
   const [gambar, setGambar] = useState<{ story: File; feed: File[] } | null>(null)
   const [pesan, setPesan] = useState('')
   const dataGambar = useMemo<DataGambar>(
@@ -98,8 +98,10 @@ function BagikanLineup({ sesi, lineup }: { sesi: Sesi; lineup: TimLineup[] }) {
       tanggal: formatTanggal(sesi.tanggal),
       info: [sesi.lokasi, sesi.catatan].filter(Boolean).join(' · '),
       tim: lineup.filter((g) => g.tim).map((g) => ({ nama: g.tim, warna: warnaTim(g.tim), pemain: g.pemain.map((p) => ({ nama: p.nama, kiper: p.posisi === 'GK' })) })),
+      jadwal: jadwal.laga.map((l) => ({ timA: l.timA, timB: l.timB })),
+      jadwalOtomatis: jadwal.otomatis,
     }),
-    [sesi, lineup],
+    [sesi, lineup, jadwal],
   )
   const kunci = JSON.stringify(dataGambar)
 
@@ -134,7 +136,7 @@ function BagikanLineup({ sesi, lineup }: { sesi: Sesi; lineup: TimLineup[] }) {
           Story · 9:16
         </button>
         <button type="button" className="btn-ghost" disabled={!gambar} onClick={() => gambar && kirim(gambar.feed)}>
-          Feed · {dataGambar.tim.length} foto 4:5
+          Feed · {gambar?.feed.length ?? dataGambar.tim.length + (dataGambar.jadwal.length > 0 ? 1 : 0)} foto 4:5
         </button>
       </div>
       {pesan && <p className="mute share-pesan">{pesan}</p>}
@@ -214,7 +216,7 @@ function PosterLineup({ sesi }: { sesi: Sesi }) {
           {jadwal.otomatis && <p className="mute laga-catatan">Urutan sementara, tiap tim bertemu sekali. Bisa berubah di lapangan.</p>}
         </section>
       )}
-      <BagikanLineup sesi={sesi} lineup={lineup} />
+      <BagikanLineup sesi={sesi} lineup={lineup} jadwal={jadwal} />
     </>
   )
 }

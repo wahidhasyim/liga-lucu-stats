@@ -1,7 +1,7 @@
-import { EMAS, slug } from './warnaTim'
+import { EMAS, slug, warnaTim } from './warnaTim'
 
 // Gambar line-up untuk Instagram, digambar langsung di canvas supaya ukurannya pasti:
-// story 9:16 (1080×1920) dan feed 4:5 (1080×1350), satu foto per tim.
+// story 9:16 (1080×1920) dan feed 4:5 (1080×1350), satu foto per tim plus satu foto jadwal laga.
 
 export interface TimGambar {
   nama: string
@@ -14,6 +14,8 @@ export interface DataGambar {
   tanggal: string // sudah diformat, misal "Minggu, 8 Nov 2026"
   info: string // lokasi · catatan
   tim: TimGambar[]
+  jadwal: { timA: string; timB: string }[]
+  jadwalOtomatis: boolean // jadwal belum disimpan admin, hasil acak urutan round robin
 }
 
 const W = 1080
@@ -157,33 +159,69 @@ export async function gambarStory(d: DataGambar): Promise<File> {
   return new File([await keBlob(cv)], `liga-lucu-pekan-${d.pekan}-story.png`, { type: 'image/png' })
 }
 
+// Kerangka satu foto feed: garis warna, logo, nomor urut foto, judul besar, dan footer tanggal. Mengembalikan posisi y di bawah judul.
+function kerangkaFeed(ctx: Ctx, img: HTMLImageElement, d: DataGambar, warna: string, label: string, ke: number, dari: number, judul: string, sub: string) {
+  kotak(ctx, 0, 0, W, 16, warna)
+  ctx.drawImage(img, 70, 66, 96, 96)
+  tulis(ctx, 'LIGA LUCU DEPOK', 190, 108, { font: `700 28px ${BODY}`, jarak: 6 })
+  tulis(ctx, `PEKAN ${d.pekan} · ${label}`, 190, 148, { font: `700 26px ${BODY}`, warna: EMAS, jarak: 6 })
+  tulis(ctx, `${ke}/${dari}`, W - 70, 108, { font: `56px ${DISP}`, warna: MUTE, rata: 'right' })
+
+  const nama = judul.toUpperCase()
+  const ukuran = hurufPas(ctx, nama, DISP, 190, W - 140)
+  tulis(ctx, nama, 70, 260 + ukuran * 0.85, { font: `${ukuran}px ${DISP}` })
+  const garis = 260 + ukuran * 0.85 + 28
+  kotak(ctx, 70, garis, 220, 12, warna)
+  tulis(ctx, sub, 70, garis + 70, { font: `700 28px ${BODY}`, warna: MUTE, jarak: 7 })
+
+  kotak(ctx, 70, 1206, W - 140, 2, 'rgba(255, 255, 255, 0.12)')
+  const lebarWeb = tulis(ctx, WEB, W - 70, 1258, { font: `700 20px ${BODY}`, warna: EMAS, rata: 'right', jarak: 5 })
+  tulis(ctx, d.tanggal, 70, 1258, { font: `600 26px ${BODY}`, maks: W - 140 - lebarWeb - 32 })
+  if (d.info) tulis(ctx, d.info, 70, 1300, { font: `500 24px ${BODY}`, warna: MUTE, maks: W - 140 })
+  return garis + 110
+}
+
+// Daftar laga bernomor: tim A rata kanan, "VS" di tengah, tim B rata kiri, masing-masing dengan kotak warna tim.
+function daftarJadwal(ctx: Ctx, laga: DataGambar['jadwal'], y: number, tinggi: number) {
+  const x = 70
+  const w = W - 140
+  const baris = Math.min(120, tinggi / Math.max(laga.length, 1))
+  const kolomNo = 64
+  const tengah = x + kolomNo + (w - kolomNo) / 2
+  const sisi = (w - kolomNo) / 2 - 70 // lebar nama tim + kotak warna
+  const terpanjang = laga.flatMap((l) => [l.timA, l.timB]).reduce((a, b) => (b.length > a.length ? b : a), '').toUpperCase()
+  const huruf = Math.min(Math.floor(baris * 0.55), hurufPas(ctx, terpanjang, DISP, 64, sisi - 40))
+  const kotakW = Math.round(huruf * 0.42)
+  laga.forEach((l, i) => {
+    const dasar = y + baris * i + baris * 0.5 + huruf * 0.34
+    tulis(ctx, String(i + 1), x, dasar, { font: `${Math.round(huruf * 0.8)}px ${DISP}`, warna: EMAS })
+    tulis(ctx, 'VS', tengah, dasar - huruf * 0.08, { font: `700 ${Math.round(huruf * 0.42)}px ${BODY}`, warna: MUTE, rata: 'center', jarak: 3 })
+    const atasKotak = dasar - huruf * 0.34 - kotakW / 2 - huruf * 0.04
+    kotak(ctx, tengah - 70 - kotakW, atasKotak, kotakW, kotakW, warnaTim(l.timA))
+    tulis(ctx, l.timA.toUpperCase(), tengah - 70 - kotakW - 18, dasar, { font: `${huruf}px ${DISP}`, rata: 'right', jarak: 1, maks: sisi - kotakW - 18 })
+    kotak(ctx, tengah + 70, atasKotak, kotakW, kotakW, warnaTim(l.timB))
+    tulis(ctx, l.timB.toUpperCase(), tengah + 70 + kotakW + 18, dasar, { font: `${huruf}px ${DISP}`, jarak: 1, maks: sisi - kotakW - 18 })
+    if (i < laga.length - 1) kotak(ctx, x, y + baris * (i + 1), w, 2, 'rgba(255, 255, 255, 0.07)')
+  })
+}
+
 export async function gambarFeed(d: DataGambar): Promise<File[]> {
   const img = await siapkan()
   const H = 1350
   const hasil: File[] = []
+  const dari = d.tim.length + (d.jadwal.length > 0 ? 1 : 0)
   for (const [i, t] of d.tim.entries()) {
     const [cv, ctx] = kanvas(H)
-    kotak(ctx, 0, 0, W, 16, t.warna)
-    ctx.drawImage(img, 70, 66, 96, 96)
-    tulis(ctx, 'LIGA LUCU DEPOK', 190, 108, { font: `700 28px ${BODY}`, jarak: 6 })
-    tulis(ctx, `PEKAN ${d.pekan} · LINE-UP`, 190, 148, { font: `700 26px ${BODY}`, warna: EMAS, jarak: 6 })
-    tulis(ctx, `${i + 1}/${d.tim.length}`, W - 70, 108, { font: `56px ${DISP}`, warna: MUTE, rata: 'right' })
-
-    const nama = t.nama.toUpperCase()
-    const ukuran = hurufPas(ctx, nama, DISP, 190, W - 140)
-    tulis(ctx, nama, 70, 260 + ukuran * 0.85, { font: `${ukuran}px ${DISP}` })
-    const garis = 260 + ukuran * 0.85 + 28
-    kotak(ctx, 70, garis, 220, 12, t.warna)
-    tulis(ctx, `${t.pemain.length} PEMAIN`, 70, garis + 70, { font: `700 28px ${BODY}`, warna: MUTE, jarak: 7 })
-
-    const atas = garis + 110
+    const atas = kerangkaFeed(ctx, img, d, t.warna, 'LINE-UP', i + 1, dari, t.nama, `${t.pemain.length} PEMAIN`)
     daftarPemain(ctx, t, 70, atas, W - 140, 1180 - atas, 54, true)
-
-    kotak(ctx, 70, 1206, W - 140, 2, 'rgba(255, 255, 255, 0.12)')
-    const lebarWeb = tulis(ctx, WEB, W - 70, 1258, { font: `700 20px ${BODY}`, warna: EMAS, rata: 'right', jarak: 5 })
-    tulis(ctx, d.tanggal, 70, 1258, { font: `600 26px ${BODY}`, maks: W - 140 - lebarWeb - 32 })
-    if (d.info) tulis(ctx, d.info, 70, 1300, { font: `500 24px ${BODY}`, warna: MUTE, maks: W - 140 })
     hasil.push(new File([await keBlob(cv)], `liga-lucu-pekan-${d.pekan}-${i + 1}-${slug(t.nama)}.png`, { type: 'image/png' }))
+  }
+  if (d.jadwal.length > 0) {
+    const [cv, ctx] = kanvas(H)
+    const sub = `${d.jadwal.length} LAGA${d.jadwalOtomatis ? ' · URUTAN SEMENTARA' : ''}`
+    const atas = kerangkaFeed(ctx, img, d, EMAS, 'JADWAL', dari, dari, 'Jadwal laga', sub)
+    daftarJadwal(ctx, d.jadwal, atas - 20, 1190 - atas)
+    hasil.push(new File([await keBlob(cv)], `liga-lucu-pekan-${d.pekan}-${dari}-jadwal.png`, { type: 'image/png' }))
   }
   return hasil
 }

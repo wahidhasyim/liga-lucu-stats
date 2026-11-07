@@ -25,7 +25,7 @@ Atas persetujuan pemilik, web publik juga membaca data lewat Apps Script (`doGet
 - Tab Sesi di admin menampilkan kartu sesi yang akan datang, lengkap dengan pemain per tim. Ketuk kartunya untuk mengedit sesi itu.
 - Kartu "Sesi terakhir" di beranda tidak memakai sesi hari ini yang belum ada hasilnya.
 - Jadwal laga tampil di halaman sesi. Sumbernya baris tab Laga sesi itu (termasuk yang skornya masih kosong), atau, kalau belum ada, round-robin otomatis dari tim di line-up dengan urutan yang sama seperti di tab Hasil admin. Tab Hasil juga membaca laga yang belum dimainkan, supaya jadwal yang tersimpan tidak hilang saat form dibuka lagi.
-- Detail sesi yang akan datang tampil sebagai poster line-up (grid 2 kolom, warna aksen dari nama tim). Di bawahnya ada tombol bagikan yang menggambar PNG di canvas: story 9:16 (1080×1920) dan feed 4:5 (1080×1350) satu per tim. Gambar dibuat begitu halaman dibuka, lalu dikirim lewat Web Share API; kalau tidak didukung, gambar diunduh.
+- Detail sesi yang akan datang tampil sebagai poster line-up (grid 2 kolom, warna aksen dari nama tim). Di bawahnya ada tombol bagikan yang menggambar PNG di canvas: story 9:16 (1080×1920) dan feed 4:5 (1080×1350) satu per tim plus satu foto jadwal laga di akhir. Gambar dibuat begitu halaman dibuka, lalu dikirim lewat Web Share API; kalau tidak didukung, gambar diunduh.
 
 ## Arsitektur
 
