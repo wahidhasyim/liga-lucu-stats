@@ -9,7 +9,7 @@ import type { JadwalLaga, Sesi } from '../data/types'
 import { formatAngka, formatTanggal, isoHariIni, POSISI_LABEL } from '../lib/format'
 import { bagikan, gambarFeed, gambarStory, type DataGambar } from '../lib/gambarLineup'
 import { warnaTim } from '../lib/warnaTim'
-import { barisSesi, jadwalSesi, lagaSesi, lineupSesi, standingSesi, sudahMain, type BarisSesi, type BarisStanding, type TimLineup } from '../stats/compute'
+import { barisSesi, jadwalSesi, jamLaga, lagaSesi, lineupSesi, standingSesi, sudahMain, type BarisSesi, type BarisStanding, type TimLineup } from '../stats/compute'
 
 interface Grup {
   judul: string
@@ -38,16 +38,16 @@ function grupTim(baris: BarisSesi[], standing: BarisStanding[]): Grup[] {
   return grup
 }
 
-// Laga yang sudah main menampilkan skor; yang belum menampilkan "vs".
-function DaftarLaga({ laga }: { laga: JadwalLaga[] }) {
+// Laga yang sudah main menampilkan skor; yang belum menampilkan "vs". Kalau ada jam, jam menggantikan nomor urut.
+function DaftarLaga({ laga, jam }: { laga: JadwalLaga[]; jam?: string[] | null }) {
   return (
-    <ol className="laga-list">
+    <ol className={jam ? 'laga-list berjam' : 'laga-list'}>
       {laga.map((l, i) => {
         const main = l.skorA !== null && l.skorB !== null
         const kelas = (menang: boolean) => (main ? (menang ? 'laga-tim win' : 'laga-tim') : 'laga-tim nanti')
         return (
           <li key={i} className="laga-row">
-            <span className="laga-no lbl mute">{i + 1}</span>
+            <span className="laga-no lbl mute">{jam?.[i] ?? i + 1}</span>
             <span className={kelas(main && l.skorA! > l.skorB!)} style={{ '--warna': warnaTim(l.timA) } as CSSProperties}>
               {l.timA}
             </span>
@@ -89,7 +89,7 @@ function BarisPemain({ b }: { b: BarisSesi }) {
 }
 
 // Gambar story dan feed dibuat begitu halaman dibuka, supaya menu share HP bisa langsung muncul saat tombol diketuk.
-function BagikanLineup({ sesi, lineup, jadwal }: { sesi: Sesi; lineup: TimLineup[]; jadwal: { laga: JadwalLaga[]; otomatis: boolean } }) {
+function BagikanLineup({ sesi, lineup, jadwal, jam }: { sesi: Sesi; lineup: TimLineup[]; jadwal: { laga: JadwalLaga[]; otomatis: boolean }; jam: string[] | null }) {
   const [gambar, setGambar] = useState<{ story: File; feed: File[] } | null>(null)
   const [pesan, setPesan] = useState('')
   const dataGambar = useMemo<DataGambar>(
@@ -98,10 +98,10 @@ function BagikanLineup({ sesi, lineup, jadwal }: { sesi: Sesi; lineup: TimLineup
       tanggal: formatTanggal(sesi.tanggal),
       info: [sesi.lokasi, sesi.catatan].filter(Boolean).join(' · '),
       tim: lineup.filter((g) => g.tim).map((g) => ({ nama: g.tim, warna: warnaTim(g.tim), pemain: g.pemain.map((p) => ({ nama: p.nama, kiper: p.posisi === 'GK' })) })),
-      jadwal: jadwal.laga.map((l) => ({ timA: l.timA, timB: l.timB })),
+      jadwal: jadwal.laga.map((l, i) => ({ timA: l.timA, timB: l.timB, jam: jam?.[i] })),
       jadwalOtomatis: jadwal.otomatis,
     }),
-    [sesi, lineup, jadwal],
+    [sesi, lineup, jadwal, jam],
   )
   const kunci = JSON.stringify(dataGambar)
 
@@ -158,6 +158,7 @@ function PosterLineup({ sesi }: { sesi: Sesi }) {
   const data = useLeague()
   const lineup = lineupSesi(data, sesi.id)
   const jadwal = jadwalSesi(data, sesi.id)
+  const jam = jamLaga(sesi.catatan, jadwal.laga.length)
   const total = lineup.reduce((n, g) => n + g.pemain.length, 0)
   const jumlahTim = lineup.filter((g) => g.tim).length
   return (
@@ -212,11 +213,17 @@ function PosterLineup({ sesi }: { sesi: Sesi }) {
             <h2 className="disp">Jadwal laga</h2>
             <span className="lbl mute">{jadwal.laga.length} laga</span>
           </div>
-          <DaftarLaga laga={jadwal.laga} />
-          {jadwal.otomatis && <p className="mute laga-catatan">Urutan sementara, tiap tim bertemu sekali. Bisa berubah di lapangan.</p>}
+          <DaftarLaga laga={jadwal.laga} jam={jam} />
+          {(jadwal.otomatis || jam) && (
+            <p className="mute laga-catatan">
+              {jadwal.otomatis && 'Urutan sementara, tiap tim bertemu sekali. '}
+              {jam && 'Jam perkiraan, dibagi rata sesuai jam main. '}
+              Bisa berubah di lapangan.
+            </p>
+          )}
         </section>
       )}
-      <BagikanLineup sesi={sesi} lineup={lineup} jadwal={jadwal} />
+      <BagikanLineup sesi={sesi} lineup={lineup} jadwal={jadwal} jam={jam} />
     </>
   )
 }

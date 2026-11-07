@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BarisStat, Hasil, Laga, LeagueData, Pemain, Sesi } from '../data/types'
-import { barisSesi, compareDefault, computePlayerStats, isStatKey, jadwalRoundRobin, jadwalSesi, lineupSesi, poinBaris, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
+import { barisSesi, compareDefault, computePlayerStats, isStatKey, jadwalRoundRobin, jamLaga, jadwalSesi, lineupSesi, poinBaris, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
 
 const pemain = (id: string, nama: string, aktif = true): Pemain => ({ id, nama, panggilan: nama, posisi: 'OUT', fotoUrl: '', aktif })
 const sesi = (id: string, tanggal: string, pekan: number): Sesi => ({ id, tanggal, lokasi: '', catatan: '', pekan })
@@ -222,6 +222,19 @@ describe('jadwalRoundRobin', () => {
     expect(jadwalRoundRobin(['A', 'B', 'C'])).toHaveLength(3)
     expect(jadwalRoundRobin(['A', 'B'])).toEqual([['A', 'B']])
     expect(jadwalRoundRobin(['A'])).toEqual([])
+  })
+})
+
+describe('jamLaga', () => {
+  it('splits the session time range evenly across matches', () => {
+    expect(jamLaga('Jam 18.00 - 20.00', 6)).toEqual(['18.00', '18.20', '18.40', '19.00', '19.20', '19.40'])
+    expect(jamLaga('main 19:30–21:00, bawa rompi', 3)).toEqual(['19.30', '20.00', '20.30'])
+    expect(jamLaga('23.00 - 01.00', 2)).toEqual(['23.00', '00.00'])
+  })
+  it('returns null without a time range', () => {
+    expect(jamLaga('Hujan deras', 4)).toBeNull()
+    expect(jamLaga('Jam 18.00', 4)).toBeNull()
+    expect(jamLaga('Jam 18.00 - 20.00', 0)).toBeNull()
   })
 })
 

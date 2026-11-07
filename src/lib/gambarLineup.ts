@@ -14,7 +14,7 @@ export interface DataGambar {
   tanggal: string // sudah diformat, misal "Minggu, 8 Nov 2026"
   info: string // lokasi · catatan
   tim: TimGambar[]
-  jadwal: { timA: string; timB: string }[]
+  jadwal: { timA: string; timB: string; jam?: string }[]
   jadwalOtomatis: boolean // jadwal belum disimpan admin, hasil acak urutan round robin
 }
 
@@ -181,12 +181,13 @@ function kerangkaFeed(ctx: Ctx, img: HTMLImageElement, d: DataGambar, warna: str
   return garis + 110
 }
 
-// Daftar laga bernomor: tim A rata kanan, "VS" di tengah, tim B rata kiri, masing-masing dengan kotak warna tim.
+// Daftar laga bernomor (atau berjam, kalau jam diketahui): tim A rata kanan, "VS" di tengah, tim B rata kiri, masing-masing dengan kotak warna tim.
 function daftarJadwal(ctx: Ctx, laga: DataGambar['jadwal'], y: number, tinggi: number) {
   const x = 70
   const w = W - 140
   const baris = Math.min(120, tinggi / Math.max(laga.length, 1))
-  const kolomNo = 64
+  const berjam = laga.some((l) => l.jam)
+  const kolomNo = berjam ? 120 : 64
   const tengah = x + kolomNo + (w - kolomNo) / 2
   const sisi = (w - kolomNo) / 2 - 70 // lebar nama tim + kotak warna
   const terpanjang = laga.flatMap((l) => [l.timA, l.timB]).reduce((a, b) => (b.length > a.length ? b : a), '').toUpperCase()
@@ -194,7 +195,7 @@ function daftarJadwal(ctx: Ctx, laga: DataGambar['jadwal'], y: number, tinggi: n
   const kotakW = Math.round(huruf * 0.42)
   laga.forEach((l, i) => {
     const dasar = y + baris * i + baris * 0.5 + huruf * 0.34
-    tulis(ctx, String(i + 1), x, dasar, { font: `${Math.round(huruf * 0.8)}px ${DISP}`, warna: EMAS })
+    tulis(ctx, l.jam ?? String(i + 1), x, dasar, { font: `${Math.round(huruf * 0.8)}px ${DISP}`, warna: EMAS })
     tulis(ctx, 'VS', tengah, dasar - huruf * 0.08, { font: `700 ${Math.round(huruf * 0.42)}px ${BODY}`, warna: MUTE, rata: 'center', jarak: 3 })
     const atasKotak = dasar - huruf * 0.34 - kotakW / 2 - huruf * 0.04
     kotak(ctx, tengah - 70 - kotakW, atasKotak, kotakW, kotakW, warnaTim(l.timA))
@@ -218,7 +219,8 @@ export async function gambarFeed(d: DataGambar): Promise<File[]> {
   }
   if (d.jadwal.length > 0) {
     const [cv, ctx] = kanvas(H)
-    const sub = `${d.jadwal.length} LAGA${d.jadwalOtomatis ? ' · URUTAN SEMENTARA' : ''}`
+    const sementara = [d.jadwalOtomatis && 'URUTAN', d.jadwal.some((l) => l.jam) && 'JAM'].filter(Boolean).join(' & ')
+    const sub = `${d.jadwal.length} LAGA${sementara ? ` · ${sementara} SEMENTARA` : ''}`
     const atas = kerangkaFeed(ctx, img, d, EMAS, 'JADWAL', dari, dari, 'Jadwal laga', sub)
     daftarJadwal(ctx, d.jadwal, atas - 20, 1190 - atas)
     hasil.push(new File([await keBlob(cv)], `liga-lucu-pekan-${d.pekan}-${dari}-jadwal.png`, { type: 'image/png' }))
