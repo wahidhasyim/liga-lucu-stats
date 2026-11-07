@@ -187,7 +187,7 @@ function daftarJadwal(ctx: Ctx, laga: DataGambar['jadwal'], y: number, tinggi: n
   const w = W - 140
   const baris = Math.min(120, tinggi / Math.max(laga.length, 1))
   const berjam = laga.some((l) => l.jam)
-  const kolomNo = berjam ? 120 : 64
+  const kolomNo = berjam ? 240 : 64
   const tengah = x + kolomNo + (w - kolomNo) / 2
   const sisi = (w - kolomNo) / 2 - 70 // lebar nama tim + kotak warna
   const terpanjang = laga.flatMap((l) => [l.timA, l.timB]).reduce((a, b) => (b.length > a.length ? b : a), '').toUpperCase()

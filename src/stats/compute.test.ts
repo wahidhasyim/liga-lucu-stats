@@ -227,9 +227,9 @@ describe('jadwalRoundRobin', () => {
 
 describe('jamLaga', () => {
   it('splits the session time range evenly across matches', () => {
-    expect(jamLaga('Jam 18.00 - 20.00', 6)).toEqual(['18.00', '18.20', '18.40', '19.00', '19.20', '19.40'])
-    expect(jamLaga('main 19:30–21:00, bawa rompi', 3)).toEqual(['19.30', '20.00', '20.30'])
-    expect(jamLaga('23.00 - 01.00', 2)).toEqual(['23.00', '00.00'])
+    expect(jamLaga('Jam 18.00 - 20.00', 6)).toEqual(['18.00–18.20', '18.20–18.40', '18.40–19.00', '19.00–19.20', '19.20–19.40', '19.40–20.00'])
+    expect(jamLaga('main 19:30–21:00, bawa rompi', 3)).toEqual(['19.30–20.00', '20.00–20.30', '20.30–21.00'])
+    expect(jamLaga('23.00 - 01.00', 2)).toEqual(['23.00–00.00', '00.00–01.00'])
   })
   it('returns null without a time range', () => {
     expect(jamLaga('Hujan deras', 4)).toBeNull()

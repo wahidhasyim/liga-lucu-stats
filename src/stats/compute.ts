@@ -220,7 +220,7 @@ export function jadwalRoundRobin(tim: string[]): [string, string][] {
 
 // Jadwal laga sesi: yang disimpan admin di tab Laga, atau round-robin dari tim di line-up kalau belum ada.
 // Urutan tim sama dengan di tab Hasil admin, jadi jadwal otomatis ini cocok dengan yang nanti dibuat admin.
-// Jam mulai tiap laga, dibagi rata dari rentang jam di catatan sesi ("Jam 18.00 - 20.00" → 18.00, 18.20, …).
+// Jam tiap laga, dibagi rata dari rentang jam di catatan sesi ("Jam 18.00 - 20.00" → 18.00–18.20, 18.20–18.40, …).
 // null kalau catatan tidak memuat rentang jam.
 export function jamLaga(catatan: string, jumlah: number): string[] | null {
   const m = catatan.match(/(\d{1,2})[.:](\d{2})\s*[-–]\s*(\d{1,2})[.:](\d{2})/)
@@ -230,7 +230,7 @@ export function jamLaga(catatan: string, jumlah: number): string[] | null {
   if (selesai <= mulai) selesai += 24 * 60
   const durasi = Math.floor((selesai - mulai) / jumlah)
   const jam = (menit: number) => `${String(Math.floor(menit / 60) % 24).padStart(2, '0')}.${String(menit % 60).padStart(2, '0')}`
-  return Array.from({ length: jumlah }, (_, i) => jam(mulai + durasi * i))
+  return Array.from({ length: jumlah }, (_, i) => `${jam(mulai + durasi * i)}–${jam(mulai + durasi * (i + 1))}`)
 }
 
 export function jadwalSesi(data: LeagueData, sesiId: string): { laga: JadwalLaga[]; otomatis: boolean } {
