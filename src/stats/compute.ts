@@ -56,9 +56,9 @@ export function poinBaris(b: BarisStat, poin: Poin): number {
   return total + b.menang * p('menang') + b.seri * p('seri') + b.kalah * p('kalah')
 }
 
-// Rating sesi ala rating pemain Eropa: main biasa (poin 2,5) bernilai 6,0, tiap poin menambah 0,3, dibatasi 3,0–10,0.
+// Rating sesi ala rating pemain Eropa: main biasa (poin 2,5) bernilai 6,0, tiap poin menambah 0,2, dibatasi 3,0–10,0.
 export function ratingSesi(poin: number): number {
-  const r = Math.min(10, Math.max(3, 6 + 0.3 * (poin - 2.5)))
+  const r = Math.min(10, Math.max(3, 6 + 0.2 * (poin - 2.5)))
   return Math.round(r * 10) / 10
 }
 

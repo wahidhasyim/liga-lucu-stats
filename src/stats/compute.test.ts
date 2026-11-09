@@ -96,8 +96,8 @@ describe('computePlayerStats', () => {
 
   it('aggregates per player', () => {
     expect(byId('A')).toMatchObject({ hadir: 2, gol: 2, assist: 0, motm: 1, menang: 1, seri: 1, kalah: 0, poin: 16, winRate: 0.5 })
-    // rating sesi 9,5 dan 5,9
-    expect(byId('A').rating).toBeCloseTo(7.7)
+    // rating sesi 8,3 dan 5,9
+    expect(byId('A').rating).toBeCloseTo(7.1)
   })
 
   it('returns every player sorted by rating', () => {
@@ -120,21 +120,21 @@ describe('computePlayerStats', () => {
   it('limits to the current month for bulan-ini', () => {
     const bulanIni = computePlayerStats(data, 'bulan-ini', TODAY)
     expect(bulanIni.filter((s) => s.peringkat !== null).map((s) => [s.pemain.id, s.rating])).toEqual([
-      ['B', 8.9],
-      ['C', 7.1],
+      ['B', 7.9],
+      ['C', 6.7],
       ['A', 5.9],
     ])
   })
 })
 
 describe('ratingSesi', () => {
-  it('maps a normal session (2,5 poin) to 6,0 and adds 0,3 per poin', () => {
+  it('maps a normal session (2,5 poin) to 6,0 and adds 0,2 per poin', () => {
     expect(ratingSesi(2.5)).toBe(6)
-    expect(ratingSesi(5.5)).toBe(6.9)
-    expect(ratingSesi(10.5)).toBe(8.4)
+    expect(ratingSesi(5.5)).toBe(6.6)
+    expect(ratingSesi(10.5)).toBe(7.6)
+    expect(ratingSesi(21.5)).toBe(9.8)
   })
   it('clamps to 3,0–10,0', () => {
-    expect(ratingSesi(16.5)).toBe(10)
     expect(ratingSesi(40)).toBe(10)
     expect(ratingSesi(-20)).toBe(3)
   })
@@ -169,7 +169,7 @@ describe('compareDefault / sortBy', () => {
 describe('riwayatPemain', () => {
   it('lists sessions in pekan order with poin', () => {
     expect(riwayatPemain(data, 'A').map((r) => [r.sesi.pekan, r.poin, r.rating, `${r.menang}-${r.seri}-${r.kalah}`])).toEqual([
-      [1, 14, 9.5, '1-0-0'],
+      [1, 14, 8.3, '1-0-0'],
       [2, 2, 5.9, '0-1-0'],
     ])
   })

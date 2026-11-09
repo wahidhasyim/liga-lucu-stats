@@ -39,7 +39,7 @@ Nomor pekan dihitung otomatis dari urutan tanggal. Klasemen sesi: menang 3 poin,
 
 Poin kiper (pemain dengan posisi `GK`) dihitung otomatis dari skor laga timnya: `clean_sheet` untuk tiap laga tanpa kebobolan dan `kebobolan_1` untuk tiap laga kebobolan tepat 1 gol. Papan "Kiper terbaik" di beranda mengurutkan kiper dari rata-rata kebobolan per laga terkecil, lalu clean sheet terbanyak. Kiper dianggap jaga gawang satu sesi penuh untuk timnya.
 
-Rating pemain memakai skala 1–10 ala rating pemain Eropa. Tiap sesi, poin pemain diubah jadi rating `6,0 + 0,3 × (poin − 2,5)`, dibatasi 3,0–10,0; jadi sesi biasa (hadir, 1 menang 1 seri) bernilai 6,0. Rating pemain adalah rata-rata rating semua sesinya. Papan "Rating pemain" di beranda hanya memuat pemain yang sudah hadir minimal 3 sesi, kecuali belum ada yang memenuhi. Angkanya diatur di `ratingSesi` (`src/stats/compute.ts`) dan `MIN_HADIR_RATING` (`src/pages/Home.tsx`).
+Rating pemain memakai skala 1–10 ala rating pemain Eropa. Tiap sesi, poin pemain diubah jadi rating `6,0 + 0,2 × (poin − 2,5)`, dibatasi 3,0–10,0; jadi sesi biasa (hadir, 1 menang 1 seri) bernilai 6,0. Rating pemain adalah rata-rata rating semua sesinya. Papan "Rating pemain" di beranda hanya memuat pemain yang sudah hadir minimal 3 sesi, kecuali belum ada yang memenuhi. Angkanya diatur di `ratingSesi` (`src/stats/compute.ts`) dan `MIN_HADIR_RATING` (`src/pages/Home.tsx`).
 
 ## Keamanan
 
