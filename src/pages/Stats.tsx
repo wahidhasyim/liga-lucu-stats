@@ -4,7 +4,7 @@ import { useLeague } from '../components/Layout'
 import { POSISI_OPTIONS, Segmented, type FilterPosisi } from '../components/Segmented'
 import { StatTable } from '../components/StatTable'
 import { EmptyState } from '../components/StatusStates'
-import { computePlayerStats, isStatKey, sortBy, type Rentang } from '../stats/compute'
+import { computePlayerStats, isStatKey, MIN_HADIR_RATING, sortBy, type Rentang } from '../stats/compute'
 
 const RENTANG_OPTIONS: { value: Rentang; label: string }[] = [
   { value: 'semua', label: 'Semua waktu' },
@@ -38,7 +38,12 @@ export default function Stats() {
         <Segmented label="Posisi" value={posisi} options={POSISI_OPTIONS} onChange={setPosisi} />
       </div>
       {rows.length > 0 ? (
-        <StatTable rows={rows} urut={urut} onUrut={(k) => setParams({ urut: k }, { replace: true })} />
+        <>
+          <StatTable rows={rows} urut={urut} onUrut={(k) => setParams({ urut: k }, { replace: true })} />
+          {rows.some((s) => s.hadir >= MIN_HADIR_RATING) && rows.some((s) => s.hadir < MIN_HADIR_RATING) && (
+            <p className="lb-note">Pemain yang hadir minimal {MIN_HADIR_RATING} sesi didahulukan, lalu diurutkan sesuai kolom yang dipilih.</p>
+          )}
+        </>
       ) : (
         <EmptyState judul={rentang === 'bulan-ini' ? 'Belum ada sesi bulan ini' : 'Belum ada data'} pesan="Coba ganti filter rentang waktu atau posisi." />
       )}

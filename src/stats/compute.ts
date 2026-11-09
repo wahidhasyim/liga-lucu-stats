@@ -72,8 +72,14 @@ function sesiDalamRentang(sesi: Sesi[], rentang: Rentang, today: Date): Sesi[] {
   return sesi.filter((s) => s.tanggal.startsWith(key))
 }
 
+// Pemain yang hadir kurang dari ini tetap tampil, tapi diurutkan di bawah yang sudah cukup sering hadir,
+// supaya satu sesi bagus tidak langsung juara rating.
+export const MIN_HADIR_RATING = 3
+
+// Urutan bawaan dipakai di semua halaman (papan rating, statistik, peringkat profil, papan kiper)
+// dan jadi penentu terakhir urutan lain, supaya angka di web dan postingan IG selalu sama.
 export function compareDefault(a: PlayerStats, b: PlayerStats): number {
-  return b.rating - a.rating || b.poin - a.poin || b.gol - a.gol || a.pemain.nama.localeCompare(b.pemain.nama, 'id')
+  return Number(b.hadir >= MIN_HADIR_RATING) - Number(a.hadir >= MIN_HADIR_RATING) || b.rating - a.rating || b.poin - a.poin || b.gol - a.gol || a.pemain.nama.localeCompare(b.pemain.nama, 'id')
 }
 
 // Top skor dan top assist: kalau jumlahnya sama, gol/assist saling jadi penentu, lalu jumlah menang,
@@ -87,6 +93,7 @@ export interface SumberH2H {
 }
 
 export function sortBy(list: PlayerStats[], key: StatKey, h2h?: SumberH2H): PlayerStats[] {
+  if (key === 'rating') return [...list].sort(compareDefault)
   const kedua = PENENTU[key]
   const beda = (a: PlayerStats, b: PlayerStats) => b[key] - a[key] || (kedua ? b[kedua] - a[kedua] || b.menang - a.menang : 0)
   const urut = [...list].sort((a, b) => beda(a, b) || compareDefault(a, b))
@@ -163,12 +170,14 @@ export function computePlayerStats(data: LeagueData, rentang: Rentang = 'semua',
 export const jumlahLaga = (s: PlayerStats) => s.menang + s.seri + s.kalah
 export const kebobolanPerLaga = (s: PlayerStats) => s.kebobolan / jumlahLaga(s)
 
-// Papan kiper: kiper aktif yang sudah main, rata-rata kebobolan per laga paling kecil di atas,
-// lalu clean sheet terbanyak, laga terbanyak, baru urutan bawaan.
+// Statistik satu sesi saja, supaya daftar per sesi memakai aturan urutan yang sama dengan papan musim.
+export function dataSesi(data: LeagueData, sesiId: string): LeagueData {
+  return { ...data, sesi: data.sesi.filter((s) => s.id === sesiId), statistik: data.statistik.filter((b) => b.sesiId === sesiId), laga: data.laga.filter((l) => l.sesiId === sesiId) }
+}
+
+// Papan kiper: kiper aktif yang sudah main, urut rating seperti papan pemain lain.
 export function peringkatKiper(list: PlayerStats[]): PlayerStats[] {
-  return list
-    .filter((s) => s.pemain.posisi === 'GK' && s.pemain.aktif && jumlahLaga(s) > 0)
-    .sort((a, b) => kebobolanPerLaga(a) - kebobolanPerLaga(b) || b.cleanSheet - a.cleanSheet || jumlahLaga(b) - jumlahLaga(a) || compareDefault(a, b))
+  return list.filter((s) => s.pemain.posisi === 'GK' && s.pemain.aktif && jumlahLaga(s) > 0).sort(compareDefault)
 }
 
 export function riwayatPemain(data: LeagueData, pemainId: string): Riwayat[] {
@@ -194,7 +203,7 @@ export function barisSesi(data: LeagueData, sesiId: string): BarisSesi[] {
       const poin = poinBaris(baris, data.poin)
       return [{ pemain, baris, poin, rating: ratingSesi(poin) }]
     })
-    .sort((a, b) => b.poin - a.poin || a.pemain.nama.localeCompare(b.pemain.nama, 'id'))
+    .sort((a, b) => b.rating - a.rating || b.poin - a.poin || b.baris.gol - a.baris.gol || a.pemain.nama.localeCompare(b.pemain.nama, 'id'))
 }
 
 export function ringkasan(data: LeagueData) {

@@ -6,10 +6,7 @@ import { StandingTable } from '../components/StandingTable'
 import { EmptyState } from '../components/StatusStates'
 import type { LeagueData, Sesi } from '../data/types'
 import { formatDesimal, formatTanggal, isoHariIni } from '../lib/format'
-import { barisSesi, computePlayerStats, jumlahLaga, kebobolanPerLaga, lagaSesi, peringkatKiper, ringkasan, sortBy, sesiLive, standingSesi, sudahMain, timSesi, type PlayerStats, type StatKey } from '../stats/compute'
-
-// Papan rating hanya untuk pemain yang sudah cukup sering hadir, supaya satu sesi bagus tidak langsung juara.
-const MIN_HADIR_RATING = 3
+import { barisSesi, computePlayerStats, dataSesi, kebobolanPerLaga, lagaSesi, MIN_HADIR_RATING, peringkatKiper, ringkasan, sortBy, sesiLive, standingSesi, sudahMain, timSesi, type StatKey } from '../stats/compute'
 
 const BOARDS: { judul: string; key: StatKey }[] = [
   { judul: 'Topskor', key: 'gol' },
@@ -17,16 +14,11 @@ const BOARDS: { judul: string; key: StatKey }[] = [
   { judul: 'Raja MOTM', key: 'motm' },
 ]
 
-function papanRating(stats: PlayerStats[]): PlayerStats[] {
-  const main = sortBy(stats, 'rating').filter((s) => s.pemain.aktif && s.hadir > 0)
-  const cukup = main.filter((s) => s.hadir >= MIN_HADIR_RATING)
-  return cukup.length > 0 ? cukup : main
-}
-
 function SesiTerakhir({ data, sesi }: { data: LeagueData; sesi: Sesi }) {
   const baris = barisSesi(data, sesi.id)
   const motm = baris.filter((b) => b.baris.motm)
-  const pencetak = baris.filter((b) => b.baris.gol > 0).sort((a, b) => b.baris.gol - a.baris.gol || b.baris.assist - a.baris.assist)
+  const satuSesi = dataSesi(data, sesi.id)
+  const pencetak = sortBy(computePlayerStats(satuSesi).filter((s) => s.gol > 0), 'gol', { data: satuSesi })
   const standing = standingSesi(lagaSesi(data, sesi.id), timSesi(data, sesi.id))
   return (
     <section className="latest">
@@ -63,7 +55,7 @@ function SesiTerakhir({ data, sesi }: { data: LeagueData; sesi: Sesi }) {
           <div className="scorers">
             {pencetak.map((p) => (
               <Link key={p.pemain.id} to={`/pemain/${p.pemain.id}`}>
-                {p.pemain.panggilan} <span className="gold">{p.baris.gol}</span>
+                {p.pemain.panggilan} <span className="gold">{p.gol}</span>
               </Link>
             ))}
           </div>
@@ -122,10 +114,10 @@ export default function Home() {
               <Leaderboard
                 judul="Rating pemain"
                 statKey="rating"
-                items={papanRating(stats).slice(0, 3)}
+                items={sortBy(stats, 'rating').slice(0, 3)}
                 lihatSemua="/statistik?urut=rating"
                 nilai={(s) => formatDesimal(s.rating)}
-                catatan={`Rata-rata rating per sesi (1–10)${stats.some((s) => s.hadir >= MIN_HADIR_RATING) ? `, minimal hadir ${MIN_HADIR_RATING} sesi` : ''}.`}
+                catatan={`Rata-rata rating per sesi (1–10)${stats.some((s) => s.hadir >= MIN_HADIR_RATING) ? `; yang hadir minimal ${MIN_HADIR_RATING} sesi didahulukan` : ''}.`}
               />
               {BOARDS.map((b) => (
                 <Leaderboard
@@ -140,9 +132,9 @@ export default function Home() {
                 judul="Kiper terbaik"
                 statKey="rating"
                 items={peringkatKiper(stats).slice(0, 3)}
-                nilai={(s) => formatDesimal(kebobolanPerLaga(s))}
-                keterangan={(s) => `${s.cleanSheet} clean sheet · ${jumlahLaga(s)} laga`}
-                catatan="Angka: rata-rata kebobolan per laga, makin kecil makin bagus."
+                nilai={(s) => formatDesimal(s.rating)}
+                keterangan={(s) => `${s.cleanSheet} clean sheet · ${formatDesimal(kebobolanPerLaga(s))} kebobolan/laga`}
+                catatan="Rata-rata rating per sesi (1–10)."
               />
             </div>
           </>

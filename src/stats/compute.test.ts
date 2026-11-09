@@ -78,15 +78,15 @@ describe('peringkatKiper', () => {
     const s = mk(nama, over)
     return { ...s, pemain: { ...s.pemain, posisi: 'GK' as const } }
   }
-  it('ranks active keepers by goals conceded per laga, then clean sheets, then laga', () => {
+  it('ranks active keepers who played by rating', () => {
     const list = [
-      gk('A', { menang: 2, kebobolan: 4 }), // 2 per laga
-      gk('B', { menang: 3, kebobolan: 3, cleanSheet: 1 }), // 1 per laga
-      gk('C', { menang: 1, kebobolan: 1, cleanSheet: 0 }), // 1 per laga, tanpa clean sheet
-      gk('D', { kebobolan: 0 }), // belum main laga
-      mk('E', { menang: 3 }), // outfield
+      gk('A', { menang: 2, kebobolan: 4, rating: 7.5 }),
+      gk('B', { menang: 3, kebobolan: 3, rating: 6.4 }),
+      gk('C', { menang: 1, kebobolan: 1, rating: 6.9 }),
+      gk('D', { rating: 9 }), // belum main laga
+      mk('E', { menang: 3, rating: 9 }), // outfield
     ]
-    expect(peringkatKiper(list).map((s) => s.pemain.nama)).toEqual(['B', 'C', 'A'])
+    expect(peringkatKiper(list).map((s) => s.pemain.nama)).toEqual(['A', 'C', 'B'])
   })
 })
 
@@ -141,6 +141,11 @@ describe('ratingSesi', () => {
 })
 
 describe('compareDefault / sortBy', () => {
+  it('puts players with enough sessions above higher-rated newcomers', () => {
+    const list = [mk('Baru', { hadir: 1, rating: 9.8 }), mk('Rutin', { hadir: 3, rating: 6.4 }), mk('Jarang', { hadir: 2, rating: 7 })]
+    expect(sortBy(list, 'rating').map((s) => s.pemain.nama)).toEqual(['Rutin', 'Baru', 'Jarang'])
+  })
+
   it('breaks rating ties by total poin, then gol, then nama', () => {
     expect([mk('X', { poin: 5 }), mk('Y', { poin: 6 })].sort(compareDefault).map((s) => s.pemain.nama)).toEqual(['Y', 'X'])
     expect([mk('X', { gol: 1 }), mk('Y', { gol: 2 })].sort(compareDefault).map((s) => s.pemain.nama)).toEqual(['Y', 'X'])
