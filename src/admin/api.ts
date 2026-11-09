@@ -1,43 +1,74 @@
-import { API_URL } from '../config'
-import { parseLeague } from '../data/parse'
-import type { LeagueData, RawTables } from '../data/types'
+import { PAKAI_FIREBASE, SHEETS_API_URL } from '../config'
+import { bacaContoh, TABEL, tulisContoh } from '../data/tabel'
+import type { RawTables, Row } from '../data/types'
+import { jalankanAksi, POIN_AWAL, type Aksi, type HasilAksi, type InputAksi } from './aksi'
 
-export type Aksi = 'baca' | 'simpanPemain' | 'simpanSesi' | 'simpanHasil' | 'hapusPemain' | 'hapusSesi'
+export type { Aksi } from './aksi'
 
-interface Balasan {
-  ok: boolean
-  error?: string
-  hasil?: unknown
-  data?: RawTables
+// Penghubung halaman admin ke penyimpanan: Firestore di produksi, data contoh di memori saat development.
+export interface Backend {
+  // dipanggil dengan status login sekarang dan setiap kali berubah; mengembalikan fungsi berhenti
+  pantauLogin(cb: (masuk: boolean) => void): () => void
+  masuk(password: string): Promise<void>
+  keluar(): Promise<void>
+  jalankan<A extends Aksi>(aksi: A, data: InputAksi[A]): Promise<HasilAksi[A]>
+  // menyalin data Google Sheets (Apps Script lama) ke penyimpanan yang masih kosong
+  impor(): Promise<number>
 }
 
-type Transport = (body: string) => Promise<Balasan>
+export const PASSWORD_CONTOH = '1234'
 
-// Content-Type text/plain supaya browser tidak mengirim preflight CORS (Apps Script tidak menjawabnya).
-const viaApi: Transport = async (body) => {
-  const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body })
-  if (!res.ok) throw new Error(`Server admin error (HTTP ${res.status})`)
-  return res.json()
-}
-
-let transport: Promise<Transport | null> | null = null
-
-function ambilTransport(): Promise<Transport | null> {
-  transport ??= API_URL ? Promise.resolve(viaApi) : import.meta.env.DEV ? import('./devApi').then((m) => m.buatDevTransport()) : Promise.resolve(null)
-  return transport
-}
-
-export const adminTersambung = Boolean(API_URL) || import.meta.env.DEV
-
-export async function panggil<T = unknown>(pin: string, action: Aksi, data?: unknown): Promise<{ hasil: T; data: LeagueData }> {
-  const kirim = await ambilTransport()
-  if (!kirim) throw new Error('Halaman admin belum disambungkan ke Google Sheets.')
-  let balasan: Balasan
-  try {
-    balasan = await kirim(JSON.stringify({ pin, action, data }))
-  } catch (err) {
-    throw new Error(err instanceof TypeError ? 'Tidak bisa menghubungi server. Cek koneksi internet.' : (err as Error).message)
+function buatBackendContoh(): Backend {
+  let masuk = false
+  const pendengar = new Set<(m: boolean) => void>()
+  const ubah = (m: boolean) => {
+    masuk = m
+    pendengar.forEach((f) => f(m))
   }
-  if (!balasan.ok || !balasan.data) throw new Error(balasan.error ?? 'Terjadi kesalahan.')
-  return { hasil: balasan.hasil as T, data: parseLeague(balasan.data) }
+  return {
+    pantauLogin(cb) {
+      pendengar.add(cb)
+      cb(masuk)
+      return () => pendengar.delete(cb)
+    },
+    async masuk(password) {
+      await new Promise((r) => setTimeout(r, 300))
+      if (password !== PASSWORD_CONTOH) throw new Error('Password salah.')
+      ubah(true)
+    },
+    async keluar() {
+      ubah(false)
+    },
+    async jalankan(aksi, data) {
+      // jeda kecil meniru jaringan, supaya status "menyimpan" ikut teruji
+      await new Promise((r) => setTimeout(r, 300))
+      const k = jalankanAksi(await bacaContoh(), aksi, data)
+      tulisContoh(k.tabel)
+      return k.hasil
+    },
+    async impor() {
+      throw new Error('Impor hanya tersedia saat tersambung ke Firebase.')
+    },
+  }
+}
+
+// Data dari Apps Script lama, dalam bentuk yang sama dengan dokumen Firestore.
+export async function bacaSheets(): Promise<RawTables> {
+  const res = await fetch(SHEETS_API_URL)
+  if (!res.ok) throw new Error(`Gagal membaca Google Sheets (HTTP ${res.status})`)
+  const balasan: { ok: boolean; error?: string; data?: RawTables } = await res.json()
+  if (!balasan.ok || !balasan.data) throw new Error(balasan.error ?? 'Data Google Sheets tidak valid.')
+  const t = Object.fromEntries(TABEL.map((nama) => [nama, (balasan.data![nama] ?? []).map(bersihkan)])) as unknown as RawTables
+  if (t.poin.length === 0) t.poin = POIN_AWAL.map((r) => ({ ...r }))
+  return t
+}
+
+// Firestore menolak nilai undefined; semua sel disimpan sebagai teks.
+const bersihkan = (r: Row): Row => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v ?? '']))
+
+let backend: Promise<Backend> | null = null
+
+export function ambilBackend(): Promise<Backend> {
+  backend ??= PAKAI_FIREBASE ? import('./firebaseBackend').then((m) => m.buatBackendFirebase()) : Promise.resolve(buatBackendContoh())
+  return backend
 }

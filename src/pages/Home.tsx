@@ -6,7 +6,7 @@ import { StandingTable } from '../components/StandingTable'
 import { EmptyState } from '../components/StatusStates'
 import type { LeagueData, Sesi } from '../data/types'
 import { formatTanggal, isoHariIni } from '../lib/format'
-import { barisSesi, computePlayerStats, lagaSesi, ringkasan, sortBy, standingSesi, sudahMain, type StatKey } from '../stats/compute'
+import { barisSesi, computePlayerStats, lagaSesi, ringkasan, sortBy, sesiLive, standingSesi, sudahMain, timSesi, type StatKey } from '../stats/compute'
 
 const BOARDS: { judul: string; key: StatKey }[] = [
   { judul: 'Rating pemain', key: 'rating' },
@@ -19,11 +19,19 @@ function SesiTerakhir({ data, sesi }: { data: LeagueData; sesi: Sesi }) {
   const baris = barisSesi(data, sesi.id)
   const motm = baris.filter((b) => b.baris.motm)
   const pencetak = baris.filter((b) => b.baris.gol > 0).sort((a, b) => b.baris.gol - a.baris.gol)
-  const standing = standingSesi(lagaSesi(data, sesi.id))
+  const standing = standingSesi(lagaSesi(data, sesi.id), timSesi(data, sesi.id))
   return (
     <section className="latest">
       <div className="sec-head">
-        <h2 className="disp">Sesi terakhir</h2>
+        <h2 className="disp">
+          {sesiLive(data, sesi.id, isoHariIni()) ? (
+            <>
+              Sedang main <span className="live-tag">Live</span>
+            </>
+          ) : (
+            'Sesi terakhir'
+          )}
+        </h2>
         <Link className="lbl gold" to={`/sesi/${sesi.id}`}>
           Detail
         </Link>
@@ -115,7 +123,7 @@ export default function Home() {
             </div>
           </>
         ) : (
-          <EmptyState judul="Belum ada pertandingan" pesan="Leaderboard muncul setelah sesi pertama dicatat di Google Sheets." />
+          <EmptyState judul="Belum ada pertandingan" pesan="Leaderboard muncul setelah sesi pertama dicatat di halaman admin." />
         )}
       </div>
     </>

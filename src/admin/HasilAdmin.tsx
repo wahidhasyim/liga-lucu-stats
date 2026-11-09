@@ -36,19 +36,25 @@ export function HasilAdmin({ data, kirim }: { data: LeagueData; kirim: Kirim }) 
   )
 }
 
+// Semua laga tersimpan sesi ini, termasuk yang skornya belum diisi, dalam bentuk isian form.
+const lagaTersimpan = (data: LeagueData, sesiId: string): LagaInput[] =>
+  data.jadwal.filter((l) => l.sesiId === sesiId).map((l) => ({ timA: l.timA, skorA: l.skorA === null ? '' : String(l.skorA), skorB: l.skorB === null ? '' : String(l.skorB), timB: l.timB }))
+
 function HasilForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk } }: { data: LeagueData; sesiId: string; kirim: Kirim; simpan: ReturnType<typeof useSimpan> }) {
   const awal = useMemo(() => {
     const baris = data.statistik.filter((b) => b.sesiId === sesiId)
     const tim: string[] = []
     for (const b of baris) if (b.tim && !tim.some((t) => kunciTim(t) === kunciTim(b.tim))) tim.push(b.tim)
-    // jadwal = semua laga tersimpan, termasuk yang skornya belum diisi
-    const lagaLama = data.jadwal.filter((l) => l.sesiId === sesiId).map((l) => ({ timA: l.timA, skorA: l.skorA === null ? '' : String(l.skorA), skorB: l.skorB === null ? '' : String(l.skorB), timB: l.timB }))
+    const lagaLama = lagaTersimpan(data, sesiId)
     const laga: LagaInput[] = lagaLama.length > 0 ? lagaLama : jadwalRoundRobin(tim).map(([timA, timB]) => ({ timA, skorA: '', skorB: '', timB }))
     const isian = new Map(baris.map((b) => [b.pemainId, { gol: b.gol, assist: b.assist, motm: b.motm }]))
     return { baris, tim, laga, isian }
   }, [data, sesiId])
 
   const [laga, setLaga] = useState(awal.laga)
+  // laga yang tersimpan sekarang (ikut berubah begitu data dari server berubah)
+  const tersimpan = useMemo(() => lagaTersimpan(data, sesiId), [data, sesiId])
+  const [kartu, setKartu] = useState<{ i: number; sibuk: boolean; error: string } | null>(null)
   const [isian, setIsian] = useState<Map<string, Isian>>(awal.isian)
   const pemainById = new Map(data.pemain.map((p) => [p.id, p]))
   const { tim } = awal
@@ -60,6 +66,25 @@ function HasilForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk } }:
   const selisih = cekGolTim(tim, laga, golPemain)
   const grup = [...tim, ''].map((nama) => ({ nama, baris: awal.baris.filter((b) => kunciTim(b.tim) === kunciTim(nama)) })).filter((g) => g.baris.length > 0)
 
+  const timSama = (a: LagaInput | undefined, b: LagaInput) => !!a && kunciTim(a.timA) === kunciTim(b.timA) && kunciTim(a.timB) === kunciTim(b.timB)
+  const sudahTersimpan = (i: number) => timSama(tersimpan[i], laga[i]) && tersimpan[i].skorA === laga[i].skorA && tersimpan[i].skorB === laga[i].skorB
+
+  // Tombol Selesai: simpan skor laga ini saja. Laga lain dikirim dengan skor yang sudah tersimpan, jadi
+  // skor yang baru diketik tapi belum di-Selesai-kan tidak ikut tersimpan. Statistik pemain tidak disentuh.
+  const selesai = async (i: number) => {
+    setKartu({ i, sibuk: true, error: '' })
+    try {
+      if (kunciTim(laga[i].timA) === kunciTim(laga[i].timB)) throw new Error('Pilih dua tim yang berbeda.')
+      const kirimLaga = laga.map((l, j) =>
+        j === i ? l : timSama(tersimpan[j], l) ? { ...l, skorA: tersimpan[j].skorA, skorB: tersimpan[j].skorB } : { ...l, skorA: '', skorB: '' },
+      )
+      await kirim('simpanHasil', { sesiId, laga: kirimLaga })
+      setKartu(null)
+    } catch (err) {
+      setKartu({ i, sibuk: false, error: (err as Error).message })
+    }
+  }
+
   const simpanHasil = () =>
     jalankan(async () => {
       const salah = laga.findIndex((l) => kunciTim(l.timA) === kunciTim(l.timB))
@@ -67,7 +92,7 @@ function HasilForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk } }:
       const statistik = [...isian].map(([pemainId, s]) => ({ pemainId, ...s }))
       await kirim('simpanHasil', { sesiId, laga, statistik })
       const main = laga.filter((l) => l.skorA !== '' && l.skorB !== '').length
-      return `Hasil tersimpan: ${main} laga dimainkan. Web publik ikut berubah ±5 menit lagi.`
+      return `Hasil tersimpan: ${main} laga dimainkan.`
     })
 
   return (
@@ -76,41 +101,65 @@ function HasilForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk } }:
         <>
           <div className="sec-head">
             <h2 className="disp">Laga</h2>
-            <span className="lbl mute">Skor kosong = belum main</span>
+            <span className="lbl mute">Isi skor lalu Selesai</span>
           </div>
           <div className="adm-laga">
-            {laga.map((l, i) => (
-              <div key={i} className="adm-card laga-card">
-                <div className="adm-row-head">
-                  <span className="lbl mute">Laga {i + 1}</span>
-                  <button type="button" className="icon-btn" aria-label={`Hapus laga ${i + 1}`} onClick={() => setLaga(laga.filter((_, j) => j !== i))}>
-                    ✕
-                  </button>
-                </div>
-                {(['A', 'B'] as const).map((sisi) => (
-                  <div key={sisi} className="laga-side">
-                    <select className="input" aria-label={`Tim ${sisi} laga ${i + 1}`} value={sisi === 'A' ? l.timA : l.timB} onChange={(e) => ubahLaga(i, sisi === 'A' ? { timA: e.target.value } : { timB: e.target.value })}>
-                      {tim.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      className="input skor"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      aria-label={`Skor tim ${sisi} laga ${i + 1}`}
-                      value={sisi === 'A' ? l.skorA : l.skorB}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, '').slice(0, 2)
-                        ubahLaga(i, sisi === 'A' ? { skorA: v } : { skorB: v })
-                      }}
-                    />
+            {laga.map((l, i) => {
+              const terisi = l.skorA !== '' && l.skorB !== ''
+              const aman = sudahTersimpan(i)
+              const pernah = tersimpan[i] && tersimpan[i].skorA !== '' && tersimpan[i].skorB !== ''
+              const ini = kartu?.i === i ? kartu : null
+              return (
+                <div key={i} className={`adm-card laga-card${aman && terisi ? ' selesai' : ''}`}>
+                  <div className="adm-row-head">
+                    <span className="lbl mute">
+                      Laga {i + 1}
+                      {aman && terisi && <span className="laga-ok"> · Tersimpan ✓</span>}
+                    </span>
+                    <button type="button" className="icon-btn" aria-label={`Hapus laga ${i + 1}`} onClick={() => setLaga(laga.filter((_, j) => j !== i))}>
+                      ✕
+                    </button>
                   </div>
-                ))}
-              </div>
-            ))}
+                  {(['A', 'B'] as const).map((sisi) => (
+                    <div key={sisi} className="laga-side">
+                      <select
+                        className="input"
+                        aria-label={`Tim ${sisi} laga ${i + 1}`}
+                        value={sisi === 'A' ? l.timA : l.timB}
+                        onChange={(e) => ubahLaga(i, sisi === 'A' ? { timA: e.target.value } : { timB: e.target.value })}
+                      >
+                        {tim.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        className="input skor"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        aria-label={`Skor tim ${sisi} laga ${i + 1}`}
+                        value={sisi === 'A' ? l.skorA : l.skorB}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/\D/g, '').slice(0, 2)
+                          ubahLaga(i, sisi === 'A' ? { skorA: v } : { skorB: v })
+                        }}
+                      />
+                    </div>
+                  ))}
+                  {terisi && !aman && (
+                    <button type="button" className="btn adm-mini laga-selesai" disabled={ini?.sibuk || sibuk} onClick={() => selesai(i)}>
+                      {ini?.sibuk ? 'Menyimpan…' : pernah ? 'Simpan ulang' : 'Selesai'}
+                    </button>
+                  )}
+                  {ini?.error && (
+                    <p className="pin-error laga-err" role="alert">
+                      {ini.error}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
           </div>
           <button type="button" className="btn-ghost adm-acak" onClick={() => setLaga([...laga, { timA: tim[0], skorA: '', skorB: '', timB: tim[1] }])}>
             + Tambah laga
@@ -141,7 +190,13 @@ function HasilForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk } }:
                 </span>
                 <Stepper label={`gol ${p?.panggilan}`} value={s.gol} onChange={(gol) => ubahIsian(b.pemainId, { gol })} />
                 <Stepper label={`assist ${p?.panggilan}`} value={s.assist} onChange={(assist) => ubahIsian(b.pemainId, { assist })} />
-                <button type="button" className={`star${s.motm ? ' on' : ''}`} aria-pressed={s.motm} aria-label={`MOTM ${p?.panggilan}`} onClick={() => ubahIsian(b.pemainId, { motm: !s.motm })}>
+                <button
+                  type="button"
+                  className={`star${s.motm ? ' on' : ''}`}
+                  aria-pressed={s.motm}
+                  aria-label={`MOTM ${p?.panggilan}`}
+                  onClick={() => ubahIsian(b.pemainId, { motm: !s.motm })}
+                >
                   ★
                 </button>
               </div>

@@ -32,7 +32,7 @@ export function PemainAdmin({ data, kirim }: { data: LeagueData; kirim: Kirim })
     jalankan(async () => {
       if (!form) return ''
       if (!form.nama.trim()) throw new Error('Nama wajib diisi.')
-      const { id } = await kirim<{ id: string }>('simpanPemain', form)
+      const { id } = await kirim('simpanPemain', form)
       setForm(null)
       return form.id ? `${form.nama} diperbarui.` : `${form.nama} ditambahkan (${id}).`
     })

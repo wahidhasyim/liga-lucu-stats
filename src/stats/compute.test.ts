@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BarisStat, Hasil, Laga, LeagueData, Pemain, Sesi } from '../data/types'
-import { barisSesi, compareDefault, computePlayerStats, isStatKey, jadwalRoundRobin, jamLaga, jadwalSesi, lineupSesi, poinBaris, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
+import { barisSesi, compareDefault, computePlayerStats, isStatKey, jadwalRoundRobin, jamLaga, sesiLive, jadwalSesi, lineupSesi, poinBaris, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
 
 const pemain = (id: string, nama: string, aktif = true): Pemain => ({ id, nama, panggilan: nama, posisi: 'OUT', fotoUrl: '', aktif })
 const sesi = (id: string, tanggal: string, pekan: number): Sesi => ({ id, tanggal, lokasi: '', catatan: '', pekan })
@@ -174,6 +174,13 @@ describe('standingSesi', () => {
 
   it('is empty without laga', () => {
     expect(standingSesi([])).toEqual([])
+    // tim yang belum main ikut tampil dengan nol, tapi hanya kalau sudah ada laga
+    expect(standingSesi([], ['Merah'])).toEqual([])
+    expect(standingSesi([laga('Merah', 1, 0, 'Biru')], ['Merah', 'Biru', 'Hitam']).map((t) => [t.tim, t.main, t.poin])).toEqual([
+      ['Merah', 1, 3],
+      ['Hitam', 0, 0],
+      ['Biru', 1, 0],
+    ])
   })
 })
 
@@ -222,6 +229,20 @@ describe('jadwalRoundRobin', () => {
     expect(jadwalRoundRobin(['A', 'B', 'C'])).toHaveLength(3)
     expect(jadwalRoundRobin(['A', 'B'])).toEqual([['A', 'B']])
     expect(jadwalRoundRobin(['A'])).toEqual([])
+  })
+})
+
+describe('sesiLive', () => {
+  const laga = (skorA: number | null) => ({ sesiId: 'S3', timA: 'A', timB: 'B', skorA, skorB: skorA })
+  const dengan = (jadwal: ReturnType<typeof laga>[]): LeagueData => ({ ...data, sesi: [...data.sesi, sesi('S3', '2026-11-08', 3)], jadwal })
+
+  it('is live on the session day while some matches are saved and some are not', () => {
+    expect(sesiLive(dengan([laga(2), laga(null)]), 'S3', '2026-11-08')).toBe(true)
+  })
+  it('is not live before the first result, after the last one, or on another day', () => {
+    expect(sesiLive(dengan([laga(null), laga(null)]), 'S3', '2026-11-08')).toBe(false)
+    expect(sesiLive(dengan([laga(2), laga(1)]), 'S3', '2026-11-08')).toBe(false)
+    expect(sesiLive(dengan([laga(2), laga(null)]), 'S3', '2026-11-09')).toBe(false)
   })
 })
 

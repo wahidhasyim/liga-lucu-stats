@@ -146,12 +146,19 @@ export function lagaSesi(data: LeagueData, sesiId: string): Laga[] {
 }
 
 // Klasemen satu sesi. Poin tim tetap 3-1-0; tab Poin hanya untuk rating pemain.
-export function standingSesi(laga: Laga[]): BarisStanding[] {
+// tim: semua tim sesi itu, supaya tim yang belum main tetap tampil dengan nol saat sesi berlangsung.
+// Diabaikan kalau belum ada laga sama sekali (sesi lama tanpa laga tidak punya klasemen).
+export function standingSesi(laga: Laga[], tim: string[] = []): BarisStanding[] {
   const byTim = new Map<string, BarisStanding>()
-  const catat = (nama: string, masuk: number, kemasukan: number) => {
+  const baris = (nama: string) => {
     const kunci = kunciTim(nama)
     let t = byTim.get(kunci)
     if (!t) byTim.set(kunci, (t = { tim: nama, main: 0, menang: 0, seri: 0, kalah: 0, golMasuk: 0, kemasukan: 0, selisih: 0, poin: 0 }))
+    return t
+  }
+  if (laga.length > 0) tim.forEach(baris)
+  const catat = (nama: string, masuk: number, kemasukan: number) => {
+    const t = baris(nama)
     t.main++
     t.golMasuk += masuk
     t.kemasukan += kemasukan
@@ -167,6 +174,12 @@ export function standingSesi(laga: Laga[]): BarisStanding[] {
   }
   return [...byTim.values()].sort((a, b) => b.poin - a.poin || b.selisih - a.selisih || b.golMasuk - a.golMasuk || a.tim.localeCompare(b.tim, 'id'))
 }
+
+// Nama tim di line-up sesi, urut kemunculan.
+export const timSesi = (data: LeagueData, sesiId: string): string[] =>
+  lineupSesi(data, sesiId)
+    .filter((g) => g.tim)
+    .map((g) => g.tim)
 
 // Sudah ada hasil tercatat: laga dengan skor, atau gol/assist/MOTM/hasil pemain.
 export function sudahMain(data: LeagueData, sesiId: string): boolean {
@@ -220,6 +233,13 @@ export function jadwalRoundRobin(tim: string[]): [string, string][] {
 
 // Jadwal laga sesi: yang disimpan admin di tab Laga, atau round-robin dari tim di line-up kalau belum ada.
 // Urutan tim sama dengan di tab Hasil admin, jadi jadwal otomatis ini cocok dengan yang nanti dibuat admin.
+// Sesi hari ini yang sebagian laganya sudah tersimpan dan sebagian belum: sedang berlangsung.
+export function sesiLive(data: LeagueData, sesiId: string, hariIni: string): boolean {
+  if (data.sesi.find((s) => s.id === sesiId)?.tanggal !== hariIni) return false
+  const jadwal = data.jadwal.filter((l) => l.sesiId === sesiId)
+  return jadwal.some((l) => l.skorA !== null) && jadwal.some((l) => l.skorA === null)
+}
+
 // Jam tiap laga, dibagi rata dari rentang jam di catatan sesi ("Jam 18.00 - 20.00" → 18.00–18.20, 18.20–18.40, …).
 // null kalau catatan tidak memuat rentang jam.
 export function jamLaga(catatan: string, jumlah: number): string[] | null {
@@ -236,8 +256,5 @@ export function jamLaga(catatan: string, jumlah: number): string[] | null {
 export function jadwalSesi(data: LeagueData, sesiId: string): { laga: JadwalLaga[]; otomatis: boolean } {
   const tersimpan = data.jadwal.filter((l) => l.sesiId === sesiId)
   if (tersimpan.length > 0) return { laga: tersimpan, otomatis: false }
-  const tim = lineupSesi(data, sesiId)
-    .filter((g) => g.tim)
-    .map((g) => g.tim)
-  return { laga: jadwalRoundRobin(tim).map(([timA, timB]) => ({ sesiId, timA, timB, skorA: null, skorB: null })), otomatis: true }
+  return { laga: jadwalRoundRobin(timSesi(data, sesiId)).map(([timA, timB]) => ({ sesiId, timA, timB, skorA: null, skorB: null })), otomatis: true }
 }

@@ -1,0 +1,14 @@
+rules_version = '2';
+
+// Data liga memang publik: semua orang boleh membaca. Menulis hanya untuk akun admin bersama
+// (dibuat di Firebase Console > Authentication), dan hanya ke lima dokumen tabel.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /tabel/{nama} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.token.email == 'admin@ligalucudepok.web.app'
+        && nama in ['pemain', 'sesi', 'statistik', 'laga', 'poin'];
+    }
+  }
+}

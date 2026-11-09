@@ -276,6 +276,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 @media (min-width: 760px) { .adm-laga { grid-template-columns: 1fr 1fr; } }
 .laga-card { margin: 0; padding: 12px 14px; }
 .laga-card .adm-row-head { margin-bottom: 8px; }
+.laga-card.selesai { border-color: var(--gold); }
+.laga-ok { color: var(--gold); }
+.laga-selesai { width: 100%; margin-top: 10px; }
+.laga-err { margin: 8px 0 0; font-size: 13px; }
 .laga-side { display: grid; grid-template-columns: 1fr 64px; gap: 8px; margin-top: 8px; }
 .input.skor { text-align: center; font-family: var(--font-display); font-size: 24px; padding: 4px; }
 .icon-btn { width: 32px; height: 32px; border: 0; background: none; color: var(--mute); cursor: pointer; font-size: 15px; }
@@ -311,6 +315,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .poster::after { content: ""; position: absolute; inset: auto 0 0 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
 .poster-head { display: flex; align-items: center; gap: 10px; }
 .poster-head .lbl { line-height: 1.5; }
+.live-tag { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; padding: 3px 8px; background: #e5484d; color: #fff; font-family: var(--font-body); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; vertical-align: middle; }
+.live-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: live-kedip 1.2s ease-in-out infinite; }
+@keyframes live-kedip { 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .live-tag::before { animation: none; } }
 .poster-tag { margin-left: auto; padding: 4px 8px; border: 1px solid var(--gold); color: var(--gold); letter-spacing: 0.22em; }
 .poster-title { margin: 16px 0 6px; font-size: 64px; line-height: 0.85; }
 .poster-info { display: grid; gap: 2px; margin-bottom: 16px; font-size: 13px; }

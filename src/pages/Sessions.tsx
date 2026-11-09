@@ -3,11 +3,12 @@ import { useLeague } from '../components/Layout'
 import { EmptyState } from '../components/StatusStates'
 import type { Sesi } from '../data/types'
 import { formatTanggal, isoHariIni } from '../lib/format'
-import { barisSesi, lineupSesi, sesiAkanDatang } from '../stats/compute'
+import { barisSesi, lineupSesi, sesiAkanDatang, sesiLive } from '../stats/compute'
 
 export default function Sessions() {
   const data = useLeague()
-  const akanDatang = sesiAkanDatang(data, isoHariIni())
+  const hariIni = isoHariIni()
+  const akanDatang = sesiAkanDatang(data, hariIni)
   const idAkanDatang = new Set(akanDatang.map((s) => s.id))
   const list = data.sesi.filter((s) => !idAkanDatang.has(s.id)).reverse()
 
@@ -76,7 +77,10 @@ export default function Sessions() {
                   <div className="sesi-week">{s.pekan}</div>
                 </div>
                 <div className="sesi-meta">
-                  <div className="sesi-date">{formatTanggal(s.tanggal)}</div>
+                  <div className="sesi-date">
+                    {formatTanggal(s.tanggal)}
+                    {sesiLive(data, s.id, hariIni) && <span className="live-tag">Live</span>}
+                  </div>
                   <div className="mute">{[s.lokasi, `${baris.length} pemain`].filter(Boolean).join(' · ')}</div>
                   {motm && <div className="lbl gold">MOTM · {motm}</div>}
                 </div>

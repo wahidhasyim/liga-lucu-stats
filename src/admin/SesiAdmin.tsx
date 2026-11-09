@@ -215,7 +215,7 @@ function SesiForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk }, on
         const b = baruByKunci.get(kunci)
         return b ? { baru: { nama: b.nama, posisi: b.posisi }, tim: nama[t!] } : { pemainId: kunci, tim: nama[t!] }
       })
-      const { id, pemainBaru } = await kirim<{ id: string; pemainBaru: string[] }>('simpanSesi', { id: sesiId || undefined, tanggal, lokasi, catatan, lineup })
+      const { id, pemainBaru } = await kirim('simpanSesi', { id: sesiId || undefined, tanggal, lokasi, catatan, lineup })
       onTersimpan(id)
       const tambahan = pemainBaru.length ? ` ${pemainBaru.length} pemain baru masuk daftar pemain.` : ''
       return `Sesi ${id} tersimpan: ${lineup.length} pemain.${tambahan} Isi skor di tab Hasil setelah main.`

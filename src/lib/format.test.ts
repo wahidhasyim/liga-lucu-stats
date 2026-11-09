@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseCsv } from '../data/sheets'
+import { parseCsv } from '../data/tabel'
 import { formatAngka, formatDesimal, formatPersen, formatTanggal, formatTanggalPendek, inisial } from './format'
 
 describe('format', () => {

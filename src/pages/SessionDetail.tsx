@@ -9,7 +9,7 @@ import type { JadwalLaga, Sesi } from '../data/types'
 import { formatAngka, formatTanggal, isoHariIni, POSISI_LABEL } from '../lib/format'
 import { bagikan, gambarFeed, gambarStory, type DataGambar } from '../lib/gambarLineup'
 import { warnaTim } from '../lib/warnaTim'
-import { barisSesi, jadwalSesi, jamLaga, lagaSesi, lineupSesi, standingSesi, sudahMain, type BarisSesi, type BarisStanding, type TimLineup } from '../stats/compute'
+import { barisSesi, jadwalSesi, jamLaga, lagaSesi, lineupSesi, sesiLive, standingSesi, timSesi, sudahMain, type BarisSesi, type BarisStanding, type TimLineup } from '../stats/compute'
 
 interface Grup {
   judul: string
@@ -240,7 +240,7 @@ export default function SessionDetail() {
   const laga = lagaSesi(data, sesi.id)
   const jadwal = jadwalSesi(data, sesi.id).laga
   const belumMain = jadwal.filter((l) => l.skorA === null).length
-  const standing = standingSesi(laga)
+  const standing = standingSesi(laga, timSesi(data, sesi.id))
   const grup = laga.length > 0 ? grupTim(baris, standing) : grupHasil(baris)
   if (sesi.tanggal >= isoHariIni() && !sudahMain(data, sesi.id))
     return (
@@ -261,7 +261,10 @@ export default function SessionDetail() {
         {formatTanggal(sesi.tanggal)}
         {sesi.lokasi && ` · ${sesi.lokasi}`}
       </div>
-      <h1 className="disp page-title">Pekan {sesi.pekan}</h1>
+      <h1 className="disp page-title">
+        Pekan {sesi.pekan}
+        {sesiLive(data, sesi.id, isoHariIni()) && <span className="live-tag">Live</span>}
+      </h1>
       {sesi.catatan && <p className="note">{sesi.catatan}</p>}
       <div className="band">
         <div>

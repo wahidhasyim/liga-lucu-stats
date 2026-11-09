@@ -1,6 +1,6 @@
 # Liga Lucu Depok
 
-Website statistik pemain untuk komunitas fun football Liga Lucu Depok. Isinya leaderboard, profil pemain, arsip sesi mingguan, dan halaman admin. Semua data tersimpan di Google Sheets dan dibaca/ditulis lewat Google Apps Script.
+Website statistik pemain untuk komunitas fun football Liga Lucu Depok. Isinya leaderboard, profil pemain, arsip sesi mingguan, dan halaman admin. Semua data tersimpan di Cloud Firestore (Firebase); web publik ikut berubah begitu admin menyimpan.
 
 ## Jalankan di komputer
 
@@ -11,28 +11,30 @@ npm test        # unit test
 npm run build   # build produksi ke dist/
 ```
 
-Secara default, `npm run dev` memakai data asli lewat `API_URL` di `src/config.ts`, **termasuk saat menyimpan dari halaman admin**. Untuk mencoba dengan data contoh dari `sheet-template/`, jalankan:
+`npm run dev` memakai data contoh dari `sheet-template/` di memori (password admin `1234`, perubahan hilang saat reload), jadi data uji tidak pernah masuk ke database asli. Untuk menyambung ke Firestore asli, **termasuk saat menyimpan dari halaman admin**:
 
 ```bash
-VITE_API_URL= npm run dev   # data contoh; PIN admin 1234; perubahan hilang saat reload
+VITE_FIREBASE=on npm run dev
 ```
 
 ## Deploy ke Firebase Hosting
 
 ```bash
-firebase deploy --only hosting   # build otomatis, lalu upload ke https://ligalucudepok.web.app
+firebase deploy --only hosting           # build otomatis, lalu upload ke https://ligalucudepok.web.app
+firebase deploy --only firestore:rules   # setelah mengubah firestore.rules
 ```
 
-Link Google Sheet, editor Apps Script, dan cara memperbarui script ada di [SETUP-SHEETS.md](SETUP-SHEETS.md).
+Panduan admin, akun admin, dan isi data ada di [SETUP-FIREBASE.md](SETUP-FIREBASE.md).
 
 ## Halaman admin
 
-`/admin` dipakai untuk mengelola pemain, line-up sesi, dan hasil pertandingan dari HP, dengan PIN admin yang disimpan di Script properties Apps Script. Halaman ini menulis ke Google Sheets lewat `apps-script/Code.gs`.
+`/admin` dipakai untuk mengelola pemain, line-up sesi, dan hasil pertandingan dari HP. Admin login dengan password akun `admin@ligalucudepok.web.app` (Firebase Authentication). Skor tiap laga bisa disimpan begitu laga selesai, dan web publik menampilkan klasemen live.
 
 ## Struktur kode
 
-- `src/data/`: mengambil data (Apps Script, atau CSV sebagai cadangan) dan memvalidasi isinya.
-- `src/admin/` dan `apps-script/`: halaman admin dan API Google Apps Script-nya.
+- `src/data/`: berlangganan data Firestore (atau data contoh saat development) dan memvalidasi isinya.
+- `src/admin/`: halaman admin; `aksi.ts` berisi logika simpan sebagai fungsi murni yang ada tesnya.
+- `apps-script/`: arsip API Google Sheets lama, hanya dipakai tombol impor sekali jalan.
 - `src/stats/`: menghitung rating, peringkat, dan riwayat pemain. Semuanya fungsi murni yang ada tesnya.
 - `src/pages/` dan `src/components/`: tampilan website.
 - `docs/superpowers/`: spec desain dan rencana implementasi.
