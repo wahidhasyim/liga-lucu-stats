@@ -23,6 +23,13 @@ Batas dokumen Firestore 1 MB. Baris statistik ~110 byte, jadi `tabel/statistik` 
 - **Impor sekali jalan:** saat admin login dan Firestore masih kosong, halaman admin menampilkan tombol "Impor dari Google Sheets" yang membaca `doGet` Apps Script lalu menulis kelima dokumen. Kalau Poin kosong, diisi nilai awal (hadir 1, gol 3, assist 2, motm 5, menang 1, seri 0.5).
 - **Development:** tanpa konfigurasi Firebase (`VITE_FIREBASE=off`), web memakai data contoh dan admin menjalankan `aksi.ts` di memori (password contoh `1234`), menggantikan `devApi`/`gasShim`.
 
+## Simpan per laga dan klasemen live
+
+- **Admin, tab Hasil:** tiap kartu laga punya tombol **Selesai** yang langsung menyimpan skor laga itu, tanpa menunggu statistik pemain. Yang dikirim adalah daftar laga di form (tim dan skor) memakai aksi `simpanHasil` tanpa `statistik`; statistik pemain (gol, assist, MOTM) tidak disentuh. Laga yang sudah tersimpan diberi tanda "Tersimpan"; mengubah skornya lagi memunculkan tombol **Simpan ulang**. Tombol **Simpan hasil** di bawah tetap ada untuk gol/assist/MOTM (dan ikut menyimpan laga).
+- **Web publik:** begitu laga pertama tersimpan, halaman sesi berpindah dari poster line-up ke tampilan klasemen + "Jadwal & hasil x/y dimainkan" (perilaku yang sudah ada). Karena web berlangganan Firestore, klasemen dan skor berubah sendiri beberapa detik setelah admin menekan Selesai, tanpa muat ulang.
+- **Tanda LIVE:** sesi hari ini yang sudah ada laga tersimpan tapi belum semua dimainkan diberi tanda **LIVE** di halaman sesi, daftar sesi, dan beranda.
+- Gol per laga tidak dicatat; gol/assist tetap per sesi.
+
 ## Keamanan (firestore.rules)
 
 ```
