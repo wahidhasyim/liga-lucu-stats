@@ -22,6 +22,7 @@ export default function Stats() {
   const rows = sortBy(
     computePlayerStats(data, rentang).filter((s) => s.pemain.aktif && s.hadir > 0 && (posisi === 'ALL' || s.pemain.posisi === posisi)),
     urut,
+    { data, rentang },
   )
 
   return (

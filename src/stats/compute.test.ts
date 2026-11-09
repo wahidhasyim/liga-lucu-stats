@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BarisStat, Hasil, Laga, LeagueData, Pemain, Sesi } from '../data/types'
-import { barisSesi, compareDefault, computePlayerStats, isStatKey, jadwalRoundRobin, jamLaga, sesiLive, jadwalSesi, lineupSesi, peringkatKiper, poinBaris, ratingSesi, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
+import { barisSesi, compareDefault, computePlayerStats, isStatKey, jadwalRoundRobin, jamLaga, sesiLive, jadwalSesi, lineupSesi, peringkatKiper, poinBaris, poinH2H, ratingSesi, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
 
 const pemain = (id: string, nama: string, aktif = true): Pemain => ({ id, nama, panggilan: nama, posisi: 'OUT', fotoUrl: '', aktif })
 const sesi = (id: string, tanggal: string, pekan: number): Sesi => ({ id, tanggal, lokasi: '', catatan: '', pekan })
@@ -159,10 +159,46 @@ describe('compareDefault / sortBy', () => {
     expect(sortBy(list2, 'assist').map((s) => s.pemain.nama)).toEqual(['B', 'A'])
   })
 
+  it('then breaks gol/assist ties by wins, then head to head', () => {
+    expect(sortBy([mk('A', { gol: 2, menang: 1, rating: 9 }), mk('B', { gol: 2, menang: 3 })], 'gol').map((s) => s.pemain.nama)).toEqual(['B', 'A'])
+    // A dan B sama persis; tim B mengalahkan tim A, jadi B di atas meski rating A lebih tinggi
+    const h2h: LeagueData = {
+      ...data,
+      statistik: [{ ...baris('S1', 'A', null), tim: 'Merah' }, { ...baris('S1', 'B', null), tim: 'Biru' }],
+      laga: [{ sesiId: 'S1', timA: 'Merah', skorA: 1, skorB: 2, timB: 'Biru' }],
+    }
+    const list = [mk('Andi', { gol: 2, rating: 9 }), mk('Bayu', { gol: 2, rating: 1 })].map((s, i) => ({ ...s, pemain: { ...s.pemain, id: 'AB'[i] } }))
+    expect(sortBy(list, 'gol').map((s) => s.pemain.id)).toEqual(['A', 'B'])
+    expect(sortBy(list, 'gol', { data: h2h }).map((s) => s.pemain.id)).toEqual(['B', 'A'])
+  })
+
   it('validates stat keys', () => {
     expect(isStatKey('gol')).toBe(true)
     expect(isStatKey('nama')).toBe(false)
     expect(isStatKey(null)).toBe(false)
+  })
+})
+
+describe('poinH2H', () => {
+  it('scores 3/1/0 only for laga where the players were on opposing teams', () => {
+    const d: LeagueData = {
+      ...data,
+      statistik: [{ ...baris('S1', 'A', null), tim: 'Merah' }, { ...baris('S1', 'B', null), tim: 'Biru' }, { ...baris('S1', 'C', null), tim: 'Merah' }],
+      laga: [
+        { sesiId: 'S1', timA: 'Merah', skorA: 1, skorB: 1, timB: 'Biru' },
+        { sesiId: 'S1', timA: 'Biru', skorA: 3, skorB: 0, timB: 'Merah' },
+        { sesiId: 'S1', timA: 'Merah', skorA: 5, skorB: 0, timB: 'Hitam' },
+      ],
+    }
+    expect([...poinH2H(d, ['A', 'B']).entries()]).toEqual([
+      ['A', 1],
+      ['B', 4],
+    ])
+    // rekan setim tidak saling bertemu
+    expect([...poinH2H(d, ['A', 'C']).entries()]).toEqual([
+      ['A', 0],
+      ['C', 0],
+    ])
   })
 })
 

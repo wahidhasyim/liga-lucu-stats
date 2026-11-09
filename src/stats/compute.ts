@@ -76,12 +76,53 @@ export function compareDefault(a: PlayerStats, b: PlayerStats): number {
   return b.rating - a.rating || b.poin - a.poin || b.gol - a.gol || a.pemain.nama.localeCompare(b.pemain.nama, 'id')
 }
 
-// Top skor dan top assist saling jadi penentu kalau jumlahnya sama, baru setelah itu urutan bawaan.
+// Top skor dan top assist: kalau jumlahnya sama, gol/assist saling jadi penentu, lalu jumlah menang,
+// lalu head to head antar pemain yang masih sama, baru urutan bawaan.
 const PENENTU: Partial<Record<StatKey, StatKey>> = { gol: 'assist', assist: 'gol' }
 
-export function sortBy(list: PlayerStats[], key: StatKey): PlayerStats[] {
+export interface SumberH2H {
+  data: LeagueData
+  rentang?: Rentang
+  today?: Date
+}
+
+export function sortBy(list: PlayerStats[], key: StatKey, h2h?: SumberH2H): PlayerStats[] {
   const kedua = PENENTU[key]
-  return [...list].sort((a, b) => b[key] - a[key] || (kedua ? b[kedua] - a[kedua] : 0) || compareDefault(a, b))
+  const beda = (a: PlayerStats, b: PlayerStats) => b[key] - a[key] || (kedua ? b[kedua] - a[kedua] || b.menang - a.menang : 0)
+  const urut = [...list].sort((a, b) => beda(a, b) || compareDefault(a, b))
+  if (!kedua || !h2h) return urut
+  const hasil: PlayerStats[] = []
+  for (let i = 0; i < urut.length; ) {
+    let j = i + 1
+    while (j < urut.length && beda(urut[i], urut[j]) === 0) j++
+    const grup = urut.slice(i, j)
+    if (grup.length > 1) {
+      const poin = poinH2H(h2h.data, grup.map((s) => s.pemain.id), h2h.rentang, h2h.today)
+      grup.sort((a, b) => poin.get(b.pemain.id)! - poin.get(a.pemain.id)! || compareDefault(a, b))
+    }
+    hasil.push(...grup)
+    i = j
+  }
+  return hasil
+}
+
+// Poin head to head (menang 3, seri 1) dari laga saat tim para pemain ini saling berhadapan.
+export function poinH2H(data: LeagueData, ids: string[], rentang: Rentang = 'semua', today = new Date()): Map<string, number> {
+  const sesiIds = new Set(sesiDalamRentang(data.sesi, rentang, today).map((s) => s.id))
+  const timPemain = new Map<string, string>()
+  for (const b of data.statistik) if (sesiIds.has(b.sesiId) && ids.includes(b.pemainId)) timPemain.set(`${b.sesiId}|${b.pemainId}`, kunciTim(b.tim))
+  const poin = new Map(ids.map((id) => [id, 0]))
+  for (const l of data.laga) {
+    if (!sesiIds.has(l.sesiId)) continue
+    const di = (tim: string) => ids.filter((id) => timPemain.get(`${l.sesiId}|${id}`) === kunciTim(tim))
+    const timA = di(l.timA)
+    const timB = di(l.timB)
+    if (timA.length === 0 || timB.length === 0) continue
+    const [pa, pb] = l.skorA > l.skorB ? [3, 0] : l.skorA < l.skorB ? [0, 3] : [1, 1]
+    for (const id of timA) poin.set(id, poin.get(id)! + pa)
+    for (const id of timB) poin.set(id, poin.get(id)! + pb)
+  }
+  return poin
 }
 
 export function computePlayerStats(data: LeagueData, rentang: Rentang = 'semua', today = new Date()): PlayerStats[] {

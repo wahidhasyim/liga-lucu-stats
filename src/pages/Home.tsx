@@ -132,7 +132,7 @@ export default function Home() {
                   key={b.key}
                   judul={b.judul}
                   statKey={b.key}
-                  items={sortBy(stats, b.key).filter((s) => s[b.key] > 0).slice(0, 3)}
+                  items={sortBy(stats, b.key, { data }).filter((s) => s[b.key] > 0).slice(0, 3)}
                   lihatSemua={`/statistik?urut=${b.key}`}
                 />
               ))}
