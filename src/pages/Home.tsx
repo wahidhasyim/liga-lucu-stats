@@ -18,7 +18,7 @@ const BOARDS: { judul: string; key: StatKey }[] = [
 function SesiTerakhir({ data, sesi }: { data: LeagueData; sesi: Sesi }) {
   const baris = barisSesi(data, sesi.id)
   const motm = baris.filter((b) => b.baris.motm)
-  const pencetak = baris.filter((b) => b.baris.gol > 0).sort((a, b) => b.baris.gol - a.baris.gol)
+  const pencetak = baris.filter((b) => b.baris.gol > 0).sort((a, b) => b.baris.gol - a.baris.gol || b.baris.assist - a.baris.assist)
   const standing = standingSesi(lagaSesi(data, sesi.id), timSesi(data, sesi.id))
   return (
     <section className="latest">

@@ -112,6 +112,13 @@ describe('compareDefault / sortBy', () => {
     expect(sortBy(list, 'gol').map((s) => s.pemain.nama)).toEqual(['B', 'C', 'A'])
   })
 
+  it('breaks gol ties by assist and assist ties by gol before rating', () => {
+    const list = [mk('A', { gol: 2, assist: 1, rating: 9 }), mk('B', { gol: 2, assist: 3, rating: 1 }), mk('C', { gol: 4, assist: 1, rating: 1 })]
+    expect(sortBy(list, 'gol').map((s) => s.pemain.nama)).toEqual(['C', 'B', 'A'])
+    const list2 = [mk('A', { assist: 2, gol: 0, rating: 9 }), mk('B', { assist: 2, gol: 1, rating: 1 })]
+    expect(sortBy(list2, 'assist').map((s) => s.pemain.nama)).toEqual(['B', 'A'])
+  })
+
   it('validates stat keys', () => {
     expect(isStatKey('gol')).toBe(true)
     expect(isStatKey('nama')).toBe(false)

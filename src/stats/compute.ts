@@ -64,8 +64,12 @@ export function compareDefault(a: PlayerStats, b: PlayerStats): number {
   return b.rating - a.rating || b.poinPerSesi - a.poinPerSesi || b.gol - a.gol || a.pemain.nama.localeCompare(b.pemain.nama, 'id')
 }
 
+// Top skor dan top assist saling jadi penentu kalau jumlahnya sama, baru setelah itu urutan bawaan.
+const PENENTU: Partial<Record<StatKey, StatKey>> = { gol: 'assist', assist: 'gol' }
+
 export function sortBy(list: PlayerStats[], key: StatKey): PlayerStats[] {
-  return [...list].sort((a, b) => b[key] - a[key] || compareDefault(a, b))
+  const kedua = PENENTU[key]
+  return [...list].sort((a, b) => b[key] - a[key] || (kedua ? b[kedua] - a[kedua] : 0) || compareDefault(a, b))
 }
 
 export function computePlayerStats(data: LeagueData, rentang: Rentang = 'semua', today = new Date()): PlayerStats[] {
