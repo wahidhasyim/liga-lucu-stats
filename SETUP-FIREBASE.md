@@ -33,9 +33,11 @@ Firestore menyimpan lima dokumen di koleksi `tabel`: `pemain`, `sesi`, `statisti
 | `sesi` | `sesi_id` (S001…), `tanggal` (`YYYY-MM-DD`), `lokasi`, `catatan` |
 | `statistik` | `sesi_id`, `pemain_id`, `tim`, `hasil` (dipakai hanya kalau sesi belum punya laga), `gol`, `assist`, `motm` (`1`/`0`) |
 | `laga` | `sesi_id`, `tim_a`, `skor_a`, `skor_b`, `tim_b`; skor kosong berarti belum dimainkan |
-| `poin` | `aksi` (`hadir`, `gol`, `assist`, `motm`, `menang`, `seri`, `kalah`), `poin` |
+| `poin` | `aksi` (`hadir`, `gol`, `assist`, `motm`, `menang`, `seri`, `kalah`, `clean_sheet`, `kebobolan_1`), `poin` |
 
 Nomor pekan dihitung otomatis dari urutan tanggal. Klasemen sesi: menang 3 poin, seri 1, kalah 0; urutan poin, selisih gol, gol masuk. Menang/seri/kalah pemain dihitung per laga dari timnya.
+
+Poin kiper (pemain dengan posisi `GK`) dihitung otomatis dari skor laga timnya: `clean_sheet` untuk tiap laga tanpa kebobolan dan `kebobolan_1` untuk tiap laga kebobolan tepat 1 gol. Papan "Kiper terbaik" di beranda mengurutkan kiper dari rata-rata kebobolan per laga terkecil, lalu clean sheet terbanyak. Kiper dianggap jaga gawang satu sesi penuh untuk timnya.
 
 ## Keamanan
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BarisStat, Hasil, Laga, LeagueData, Pemain, Sesi } from '../data/types'
-import { barisSesi, compareDefault, computePlayerStats, isStatKey, jadwalRoundRobin, jamLaga, sesiLive, jadwalSesi, lineupSesi, poinBaris, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
+import { barisSesi, compareDefault, computePlayerStats, isStatKey, jadwalRoundRobin, jamLaga, sesiLive, jadwalSesi, lineupSesi, peringkatKiper, poinBaris, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
 
 const pemain = (id: string, nama: string, aktif = true): Pemain => ({ id, nama, panggilan: nama, posisi: 'OUT', fotoUrl: '', aktif })
 const sesi = (id: string, tanggal: string, pekan: number): Sesi => ({ id, tanggal, lokasi: '', catatan: '', pekan })
@@ -14,6 +14,9 @@ const baris = (sesiId: string, pemainId: string, hasil: Hasil | null, gol = 0, a
   gol,
   assist,
   motm,
+  kebobolan: 0,
+  cleanSheet: 0,
+  kebobolanSatu: 0,
 })
 
 const POIN = { hadir: 1, gol: 3, assist: 2, motm: 5, menang: 2, seri: 1 }
@@ -49,6 +52,8 @@ const mk = (nama: string, over: Partial<PlayerStats> = {}): PlayerStats => ({
   rating: 10,
   poinPerSesi: 10,
   peringkat: null,
+  kebobolan: 0,
+  cleanSheet: 0,
   ...over,
 })
 
@@ -62,6 +67,26 @@ describe('poinBaris', () => {
   it('treats missing actions as 0 and supports a kalah action', () => {
     expect(poinBaris(baris('S1', 'A', 'K', 3), {})).toBe(0)
     expect(poinBaris(baris('S1', 'A', 'K'), { kalah: -1 })).toBe(-1)
+  })
+  it('adds keeper bonuses for clean sheets and one-goal games', () => {
+    expect(poinBaris({ ...baris('S1', 'A', null), cleanSheet: 2, kebobolanSatu: 1 }, { clean_sheet: 3, kebobolan_1: 1 })).toBe(7)
+  })
+})
+
+describe('peringkatKiper', () => {
+  const gk = (nama: string, over: Partial<PlayerStats>) => {
+    const s = mk(nama, over)
+    return { ...s, pemain: { ...s.pemain, posisi: 'GK' as const } }
+  }
+  it('ranks active keepers by goals conceded per laga, then clean sheets, then laga', () => {
+    const list = [
+      gk('A', { menang: 2, kebobolan: 4 }), // 2 per laga
+      gk('B', { menang: 3, kebobolan: 3, cleanSheet: 1 }), // 1 per laga
+      gk('C', { menang: 1, kebobolan: 1, cleanSheet: 0 }), // 1 per laga, tanpa clean sheet
+      gk('D', { kebobolan: 0 }), // belum main laga
+      mk('E', { menang: 3 }), // outfield
+    ]
+    expect(peringkatKiper(list).map((s) => s.pemain.nama)).toEqual(['B', 'C', 'A'])
   })
 })
 

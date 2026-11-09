@@ -34,6 +34,10 @@ export interface BarisStat {
   gol: number
   assist: number
   motm: boolean
+  // khusus kiper (posisi GK), 0 untuk outfield: gol lawan, laga tanpa kebobolan, laga kebobolan tepat 1
+  kebobolan: number
+  cleanSheet: number
+  kebobolanSatu: number
 }
 
 export interface Laga {

@@ -8,9 +8,13 @@ interface Props {
   statKey: StatKey
   items: PlayerStats[]
   lihatSemua?: string
+  // tampilan nilai dan keterangan sendiri, untuk papan yang bukan satu kolom statistik (papan kiper)
+  nilai?: (s: PlayerStats) => string
+  keterangan?: (s: PlayerStats) => string
+  catatan?: string
 }
 
-export function Leaderboard({ judul, statKey, items, lihatSemua }: Props) {
+export function Leaderboard({ judul, statKey, items, lihatSemua, nilai, keterangan, catatan }: Props) {
   return (
     <section>
       <div className="sec-head">
@@ -31,13 +35,14 @@ export function Leaderboard({ judul, statKey, items, lihatSemua }: Props) {
               <PlayerPhoto pemain={s.pemain} size="sm" />
               <div>
                 <div className="lb-name">{s.pemain.nama}</div>
-                <div className="lb-pos">{POSISI_LABEL[s.pemain.posisi]}</div>
+                <div className="lb-pos">{keterangan ? keterangan(s) : POSISI_LABEL[s.pemain.posisi]}</div>
               </div>
-              <span className="lb-val">{formatAngka(s[statKey])}</span>
+              <span className="lb-val">{nilai ? nilai(s) : formatAngka(s[statKey])}</span>
             </Link>
           ))}
         </div>
       )}
+      {catatan && items.length > 0 && <p className="lb-note">{catatan}</p>}
     </section>
   )
 }

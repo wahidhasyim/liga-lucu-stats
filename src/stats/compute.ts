@@ -23,6 +23,9 @@ export interface PlayerStats {
   rating: number
   poinPerSesi: number
   peringkat: number | null
+  // khusus kiper
+  kebobolan: number
+  cleanSheet: number
 }
 
 export interface Riwayat {
@@ -47,6 +50,7 @@ export function poinBaris(b: BarisStat, poin: Poin): number {
   const p = (aksi: string) => poin[aksi] ?? 0
   let total = p('hadir') + b.gol * p('gol') + b.assist * p('assist')
   if (b.motm) total += p('motm')
+  total += b.cleanSheet * p('clean_sheet') + b.kebobolanSatu * p('kebobolan_1')
   return total + b.menang * p('menang') + b.seri * p('seri') + b.kalah * p('kalah')
 }
 
@@ -76,7 +80,7 @@ export function computePlayerStats(data: LeagueData, rentang: Rentang = 'semua',
   const sesiIds = new Set(sesiDalamRentang(data.sesi, rentang, today).map((s) => s.id))
   const byPemain = new Map<string, PlayerStats>()
   for (const pemain of data.pemain) {
-    byPemain.set(pemain.id, { pemain, hadir: 0, gol: 0, assist: 0, motm: 0, menang: 0, seri: 0, kalah: 0, winRate: 0, rating: 0, poinPerSesi: 0, peringkat: null })
+    byPemain.set(pemain.id, { pemain, hadir: 0, gol: 0, assist: 0, motm: 0, menang: 0, seri: 0, kalah: 0, winRate: 0, rating: 0, poinPerSesi: 0, peringkat: null, kebobolan: 0, cleanSheet: 0 })
   }
   for (const b of data.statistik) {
     if (!sesiIds.has(b.sesiId)) continue
@@ -89,6 +93,8 @@ export function computePlayerStats(data: LeagueData, rentang: Rentang = 'semua',
     s.menang += b.menang
     s.seri += b.seri
     s.kalah += b.kalah
+    s.kebobolan += b.kebobolan
+    s.cleanSheet += b.cleanSheet
     s.rating += poinBaris(b, data.poin)
   }
   const all = [...byPemain.values()]
@@ -101,6 +107,17 @@ export function computePlayerStats(data: LeagueData, rentang: Rentang = 'semua',
   let rank = 0
   for (const s of all) if (s.pemain.aktif && s.hadir > 0) s.peringkat = ++rank
   return all
+}
+
+export const jumlahLaga = (s: PlayerStats) => s.menang + s.seri + s.kalah
+export const kebobolanPerLaga = (s: PlayerStats) => s.kebobolan / jumlahLaga(s)
+
+// Papan kiper: kiper aktif yang sudah main, rata-rata kebobolan per laga paling kecil di atas,
+// lalu clean sheet terbanyak, laga terbanyak, baru urutan bawaan.
+export function peringkatKiper(list: PlayerStats[]): PlayerStats[] {
+  return list
+    .filter((s) => s.pemain.posisi === 'GK' && s.pemain.aktif && jumlahLaga(s) > 0)
+    .sort((a, b) => kebobolanPerLaga(a) - kebobolanPerLaga(b) || b.cleanSheet - a.cleanSheet || jumlahLaga(b) - jumlahLaga(a) || compareDefault(a, b))
 }
 
 export function riwayatPemain(data: LeagueData, pemainId: string): Riwayat[] {

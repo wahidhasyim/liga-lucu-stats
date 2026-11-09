@@ -111,25 +111,32 @@ function toSkor(v: string | undefined): number | null {
   return /^\d+$/.test(s) ? Number(s) : null
 }
 
-type Rekap = Pick<BarisStat, 'menang' | 'seri' | 'kalah'>
+type Rekap = Pick<BarisStat, 'menang' | 'seri' | 'kalah' | 'kebobolan' | 'cleanSheet' | 'kebobolanSatu'>
 
 // Sesi dengan laga: hitung per laga yang dimainkan tim pemain. Sesi tanpa laga: kolom hasil = 1 laga.
-function rekapBaris(tim: string, hasil: Hasil | null, lagaSesi: Laga[]): Rekap {
-  if (lagaSesi.length === 0) return { menang: hasil === 'M' ? 1 : 0, seri: hasil === 'S' ? 1 : 0, kalah: hasil === 'K' ? 1 : 0 }
-  const rekap: Rekap = { menang: 0, seri: 0, kalah: 0 }
+// Gol lawan hanya dicatat untuk kiper, karena dipakai untuk poin dan papan kiper.
+function rekapBaris(tim: string, hasil: Hasil | null, lagaSesi: Laga[], kiper: boolean): Rekap {
+  const rekap: Rekap = { menang: 0, seri: 0, kalah: 0, kebobolan: 0, cleanSheet: 0, kebobolanSatu: 0 }
+  if (lagaSesi.length === 0) return { ...rekap, menang: hasil === 'M' ? 1 : 0, seri: hasil === 'S' ? 1 : 0, kalah: hasil === 'K' ? 1 : 0 }
   const kunci = kunciTim(tim)
   if (!kunci) return rekap
   for (const l of lagaSesi) {
-    const selisih = kunciTim(l.timA) === kunci ? l.skorA - l.skorB : kunciTim(l.timB) === kunci ? l.skorB - l.skorA : null
-    if (selisih === null) continue
-    if (selisih > 0) rekap.menang++
-    else if (selisih === 0) rekap.seri++
+    const skor = kunciTim(l.timA) === kunci ? [l.skorA, l.skorB] : kunciTim(l.timB) === kunci ? [l.skorB, l.skorA] : null
+    if (!skor) continue
+    const [masuk, lawan] = skor
+    if (masuk > lawan) rekap.menang++
+    else if (masuk === lawan) rekap.seri++
     else rekap.kalah++
+    if (!kiper) continue
+    rekap.kebobolan += lawan
+    if (lawan === 0) rekap.cleanSheet++
+    else if (lawan === 1) rekap.kebobolanSatu++
   }
   return rekap
 }
 
-function parseStatistik(rows: Row[], pemainIds: Set<string>, sesiIds: Set<string>, laga: Laga[]): BarisStat[] {
+function parseStatistik(rows: Row[], pemain: Pemain[], sesiIds: Set<string>, laga: Laga[]): BarisStat[] {
+  const posisi = new Map(pemain.map((p) => [p.id, p.posisi]))
   const lagaPerSesi = new Map<string, Laga[]>()
   for (const l of laga) lagaPerSesi.set(l.sesiId, [...(lagaPerSesi.get(l.sesiId) ?? []), l])
   const out: BarisStat[] = []
@@ -137,7 +144,7 @@ function parseStatistik(rows: Row[], pemainIds: Set<string>, sesiIds: Set<string
     const sesiId = str(r.sesi_id)
     const pemainId = str(r.pemain_id)
     if (!sesiId && !pemainId) return
-    if (!sesiIds.has(sesiId) || !pemainIds.has(pemainId)) {
+    if (!sesiIds.has(sesiId) || !posisi.has(pemainId)) {
       console.warn(`[statistik] baris ${i + 2}: sesi "${sesiId}" / pemain "${pemainId}" tidak dikenal, dilewati`)
       return
     }
@@ -146,7 +153,7 @@ function parseStatistik(rows: Row[], pemainIds: Set<string>, sesiIds: Set<string
       sesiId,
       pemainId,
       tim,
-      ...rekapBaris(tim, toHasil(r.hasil), lagaPerSesi.get(sesiId) ?? []),
+      ...rekapBaris(tim, toHasil(r.hasil), lagaPerSesi.get(sesiId) ?? [], posisi.get(pemainId) === 'GK'),
       gol: toCount(r.gol),
       assist: toCount(r.assist),
       motm: toBool(r.motm, false),
@@ -170,6 +177,6 @@ export function parseLeague(raw: RawTables): LeagueData {
   const sesi = parseSesi(raw.sesi)
   const sesiIds = new Set(sesi.map((s) => s.id))
   const { laga, jadwal } = parseLaga(raw.laga, sesiIds)
-  const statistik = parseStatistik(raw.statistik, new Set(pemain.map((p) => p.id)), sesiIds, laga)
+  const statistik = parseStatistik(raw.statistik, pemain, sesiIds, laga)
   return { pemain, sesi, statistik, laga, jadwal, poin: parsePoin(raw.poin) }
 }

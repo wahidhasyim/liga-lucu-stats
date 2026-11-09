@@ -72,7 +72,7 @@ describe('parseLeague', () => {
 
   it('parses statistik rows', () => {
     const { statistik } = parseLeague(raw())
-    expect(statistik).toEqual([{ sesiId: 'S001', pemainId: 'P01', tim: '', menang: 1, seri: 0, kalah: 0, gol: 2, assist: 0, motm: true }])
+    expect(statistik).toEqual([{ sesiId: 'S001', pemainId: 'P01', tim: '', menang: 1, seri: 0, kalah: 0, gol: 2, assist: 0, motm: true, kebobolan: 0, cleanSheet: 0, kebobolanSatu: 0 }])
   })
 
   it('skips statistik rows with unknown ids and warns', () => {
@@ -140,6 +140,30 @@ describe('parseLeague', () => {
       ['P02', 'S001', '', 0, 0, 0],
       // S002 tanpa laga: kolom hasil tetap dipakai
       ['P01', 'S002', 'Tim Budi', 0, 1, 0],
+    ])
+  })
+
+  it('counts goals conceded, clean sheets and one-goal games only for keepers', () => {
+    const { statistik } = parseLeague(
+      raw({
+        pemain: [
+          { id: 'P01', nama: 'Kiper', posisi: 'GK', aktif: 'TRUE' },
+          { id: 'P02', nama: 'Bek', posisi: 'OUT', aktif: 'TRUE' },
+        ],
+        statistik: [
+          { sesi_id: 'S001', pemain_id: 'P01', tim: 'Tim Budi' },
+          { sesi_id: 'S001', pemain_id: 'P02', tim: 'Tim Budi' },
+        ],
+        laga: [
+          { sesi_id: 'S001', tim_a: 'Tim Budi', skor_a: '2', skor_b: '0', tim_b: 'Galacticos' },
+          { sesi_id: 'S001', tim_a: 'Los Lucu', skor_a: '1', skor_b: '1', tim_b: 'Tim Budi' },
+          { sesi_id: 'S001', tim_a: 'Galacticos', skor_a: '3', skor_b: '0', tim_b: 'Tim Budi' },
+        ],
+      }),
+    )
+    expect(statistik.map((b) => [b.pemainId, b.kebobolan, b.cleanSheet, b.kebobolanSatu])).toEqual([
+      ['P01', 4, 1, 1],
+      ['P02', 0, 0, 0],
     ])
   })
 })

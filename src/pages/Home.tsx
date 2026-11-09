@@ -5,8 +5,8 @@ import { PlayerPhoto } from '../components/PlayerPhoto'
 import { StandingTable } from '../components/StandingTable'
 import { EmptyState } from '../components/StatusStates'
 import type { LeagueData, Sesi } from '../data/types'
-import { formatTanggal, isoHariIni } from '../lib/format'
-import { barisSesi, computePlayerStats, lagaSesi, ringkasan, sortBy, sesiLive, standingSesi, sudahMain, timSesi, type StatKey } from '../stats/compute'
+import { formatDesimal, formatTanggal, isoHariIni } from '../lib/format'
+import { barisSesi, computePlayerStats, jumlahLaga, kebobolanPerLaga, lagaSesi, peringkatKiper, ringkasan, sortBy, sesiLive, standingSesi, sudahMain, timSesi, type StatKey } from '../stats/compute'
 
 const BOARDS: { judul: string; key: StatKey }[] = [
   { judul: 'Rating pemain', key: 'rating' },
@@ -120,6 +120,14 @@ export default function Home() {
                   lihatSemua={`/statistik?urut=${b.key}`}
                 />
               ))}
+              <Leaderboard
+                judul="Kiper terbaik"
+                statKey="rating"
+                items={peringkatKiper(stats).slice(0, 3)}
+                nilai={(s) => formatDesimal(kebobolanPerLaga(s))}
+                keterangan={(s) => `${s.cleanSheet} clean sheet · ${jumlahLaga(s)} laga`}
+                catatan="Angka: rata-rata kebobolan per laga, makin kecil makin bagus."
+              />
             </div>
           </>
         ) : (

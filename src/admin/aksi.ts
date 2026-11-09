@@ -50,6 +50,8 @@ export const POIN_AWAL: Row[] = [
   { aksi: 'motm', poin: '5' },
   { aksi: 'menang', poin: '1' },
   { aksi: 'seri', poin: '0.5' },
+  { aksi: 'clean_sheet', poin: '3' },
+  { aksi: 'kebobolan_1', poin: '1' },
 ]
 
 const teks = (v: unknown) => (v === null || v === undefined ? '' : String(v).trim().replace(/\s+/g, ' '))

@@ -4,7 +4,7 @@ import { PlayerPhoto } from '../components/PlayerPhoto'
 import { PointsChart } from '../components/PointsChart'
 import { EmptyState, NotFound } from '../components/StatusStates'
 import { formatAngka, formatDesimal, formatPersen, formatTanggalPendek, POSISI_LABEL } from '../lib/format'
-import { computePlayerStats, riwayatPemain } from '../stats/compute'
+import { computePlayerStats, jumlahLaga, kebobolanPerLaga, riwayatPemain } from '../stats/compute'
 
 export default function PlayerProfile() {
   const { id } = useParams()
@@ -94,6 +94,22 @@ export default function PlayerProfile() {
                 <dt>Poin per sesi</dt>
                 <dd>{formatDesimal(s.poinPerSesi)}</dd>
               </div>
+              {pemain.posisi === 'GK' && jumlahLaga(s) > 0 && (
+                <>
+                  <div>
+                    <dt>Clean sheet</dt>
+                    <dd>{s.cleanSheet}</dd>
+                  </div>
+                  <div>
+                    <dt>Kebobolan</dt>
+                    <dd>{s.kebobolan}</dd>
+                  </div>
+                  <div>
+                    <dt>Kebobolan per laga</dt>
+                    <dd>{formatDesimal(kebobolanPerLaga(s))}</dd>
+                  </div>
+                </>
+              )}
             </dl>
           </section>
 
