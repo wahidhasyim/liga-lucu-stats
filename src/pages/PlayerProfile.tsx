@@ -45,7 +45,7 @@ export default function PlayerProfile() {
       <div className="kpis">
         <div>
           <span className="lbl mute">Rating</span>
-          <span className="disp gold">{formatAngka(s.rating)}</span>
+          <span className="disp gold">{s.hadir > 0 ? formatDesimal(s.rating) : '–'}</span>
         </div>
         <div>
           <span className="lbl mute">Gol</span>
@@ -91,8 +91,8 @@ export default function PlayerProfile() {
                 <dd>{formatPersen(s.winRate)}</dd>
               </div>
               <div>
-                <dt>Poin per sesi</dt>
-                <dd>{formatDesimal(s.poinPerSesi)}</dd>
+                <dt>Total poin</dt>
+                <dd>{formatAngka(s.poin)}</dd>
               </div>
               {pemain.posisi === 'GK' && jumlahLaga(s) > 0 && (
                 <>
@@ -115,7 +115,7 @@ export default function PlayerProfile() {
 
           <section className="block">
             <div className="sec-head">
-              <h2 className="disp">Poin per sesi</h2>
+              <h2 className="disp">Rating per sesi</h2>
               <span className="lbl mute">Titik emas = MOTM</span>
             </div>
             <PointsChart riwayat={riwayat} />
@@ -133,7 +133,7 @@ export default function PlayerProfile() {
                     <th title="Menang-seri-kalah per laga">M-S-K</th>
                     <th>Gol</th>
                     <th>Ast</th>
-                    <th>Poin</th>
+                    <th title="Rating sesi (1–10)">Rating</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -147,7 +147,7 @@ export default function PlayerProfile() {
                       <td>{r.menang + r.seri + r.kalah > 0 ? `${r.menang}-${r.seri}-${r.kalah}` : '–'}</td>
                       <td>{r.gol}</td>
                       <td>{r.assist}</td>
-                      <td>{formatAngka(r.poin)}</td>
+                      <td>{formatDesimal(r.rating)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BarisStat, Hasil, Laga, LeagueData, Pemain, Sesi } from '../data/types'
-import { barisSesi, compareDefault, computePlayerStats, isStatKey, jadwalRoundRobin, jamLaga, sesiLive, jadwalSesi, lineupSesi, peringkatKiper, poinBaris, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
+import { barisSesi, compareDefault, computePlayerStats, isStatKey, jadwalRoundRobin, jamLaga, sesiLive, jadwalSesi, lineupSesi, peringkatKiper, poinBaris, ratingSesi, riwayatPemain, ringkasan, sesiAkanDatang, sortBy, standingSesi, sudahMain, type PlayerStats } from './compute'
 
 const pemain = (id: string, nama: string, aktif = true): Pemain => ({ id, nama, panggilan: nama, posisi: 'OUT', fotoUrl: '', aktif })
 const sesi = (id: string, tanggal: string, pekan: number): Sesi => ({ id, tanggal, lokasi: '', catatan: '', pekan })
@@ -49,8 +49,8 @@ const mk = (nama: string, over: Partial<PlayerStats> = {}): PlayerStats => ({
   seri: 0,
   kalah: 0,
   winRate: 0,
-  rating: 10,
-  poinPerSesi: 10,
+  rating: 6,
+  poin: 10,
   peringkat: null,
   kebobolan: 0,
   cleanSheet: 0,
@@ -95,7 +95,9 @@ describe('computePlayerStats', () => {
   const byId = (id: string) => all.find((s) => s.pemain.id === id)!
 
   it('aggregates per player', () => {
-    expect(byId('A')).toMatchObject({ hadir: 2, gol: 2, assist: 0, motm: 1, menang: 1, seri: 1, kalah: 0, rating: 16, winRate: 0.5, poinPerSesi: 8 })
+    expect(byId('A')).toMatchObject({ hadir: 2, gol: 2, assist: 0, motm: 1, menang: 1, seri: 1, kalah: 0, poin: 16, winRate: 0.5 })
+    // rating sesi 9,5 dan 5,9
+    expect(byId('A').rating).toBeCloseTo(7.7)
   })
 
   it('returns every player sorted by rating', () => {
@@ -112,22 +114,35 @@ describe('computePlayerStats', () => {
   })
 
   it('gives zero rates to players without sessions', () => {
-    expect(byId('E')).toMatchObject({ hadir: 0, winRate: 0, poinPerSesi: 0, rating: 0 })
+    expect(byId('E')).toMatchObject({ hadir: 0, winRate: 0, poin: 0, rating: 0 })
   })
 
   it('limits to the current month for bulan-ini', () => {
     const bulanIni = computePlayerStats(data, 'bulan-ini', TODAY)
     expect(bulanIni.filter((s) => s.peringkat !== null).map((s) => [s.pemain.id, s.rating])).toEqual([
-      ['B', 12],
-      ['C', 6],
-      ['A', 2],
+      ['B', 8.9],
+      ['C', 7.1],
+      ['A', 5.9],
     ])
   })
 })
 
+describe('ratingSesi', () => {
+  it('maps a normal session (2,5 poin) to 6,0 and adds 0,3 per poin', () => {
+    expect(ratingSesi(2.5)).toBe(6)
+    expect(ratingSesi(5.5)).toBe(6.9)
+    expect(ratingSesi(10.5)).toBe(8.4)
+  })
+  it('clamps to 3,0–10,0', () => {
+    expect(ratingSesi(16.5)).toBe(10)
+    expect(ratingSesi(40)).toBe(10)
+    expect(ratingSesi(-20)).toBe(3)
+  })
+})
+
 describe('compareDefault / sortBy', () => {
-  it('breaks rating ties by poinPerSesi, then gol, then nama', () => {
-    expect([mk('X', { poinPerSesi: 5 }), mk('Y', { poinPerSesi: 6 })].sort(compareDefault).map((s) => s.pemain.nama)).toEqual(['Y', 'X'])
+  it('breaks rating ties by total poin, then gol, then nama', () => {
+    expect([mk('X', { poin: 5 }), mk('Y', { poin: 6 })].sort(compareDefault).map((s) => s.pemain.nama)).toEqual(['Y', 'X'])
     expect([mk('X', { gol: 1 }), mk('Y', { gol: 2 })].sort(compareDefault).map((s) => s.pemain.nama)).toEqual(['Y', 'X'])
     expect([mk('Zul'), mk('Ari')].sort(compareDefault).map((s) => s.pemain.nama)).toEqual(['Ari', 'Zul'])
   })
@@ -153,9 +168,9 @@ describe('compareDefault / sortBy', () => {
 
 describe('riwayatPemain', () => {
   it('lists sessions in pekan order with poin', () => {
-    expect(riwayatPemain(data, 'A').map((r) => [r.sesi.pekan, r.poin, `${r.menang}-${r.seri}-${r.kalah}`])).toEqual([
-      [1, 14, '1-0-0'],
-      [2, 2, '0-1-0'],
+    expect(riwayatPemain(data, 'A').map((r) => [r.sesi.pekan, r.poin, r.rating, `${r.menang}-${r.seri}-${r.kalah}`])).toEqual([
+      [1, 14, 9.5, '1-0-0'],
+      [2, 2, 5.9, '0-1-0'],
     ])
   })
 })

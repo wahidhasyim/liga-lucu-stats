@@ -6,14 +6,22 @@ import { StandingTable } from '../components/StandingTable'
 import { EmptyState } from '../components/StatusStates'
 import type { LeagueData, Sesi } from '../data/types'
 import { formatDesimal, formatTanggal, isoHariIni } from '../lib/format'
-import { barisSesi, computePlayerStats, jumlahLaga, kebobolanPerLaga, lagaSesi, peringkatKiper, ringkasan, sortBy, sesiLive, standingSesi, sudahMain, timSesi, type StatKey } from '../stats/compute'
+import { barisSesi, computePlayerStats, jumlahLaga, kebobolanPerLaga, lagaSesi, peringkatKiper, ringkasan, sortBy, sesiLive, standingSesi, sudahMain, timSesi, type PlayerStats, type StatKey } from '../stats/compute'
+
+// Papan rating hanya untuk pemain yang sudah cukup sering hadir, supaya satu sesi bagus tidak langsung juara.
+const MIN_HADIR_RATING = 3
 
 const BOARDS: { judul: string; key: StatKey }[] = [
-  { judul: 'Rating pemain', key: 'rating' },
   { judul: 'Topskor', key: 'gol' },
   { judul: 'Top assist', key: 'assist' },
   { judul: 'Raja MOTM', key: 'motm' },
 ]
+
+function papanRating(stats: PlayerStats[]): PlayerStats[] {
+  const main = sortBy(stats, 'rating').filter((s) => s.pemain.aktif && s.hadir > 0)
+  const cukup = main.filter((s) => s.hadir >= MIN_HADIR_RATING)
+  return cukup.length > 0 ? cukup : main
+}
 
 function SesiTerakhir({ data, sesi }: { data: LeagueData; sesi: Sesi }) {
   const baris = barisSesi(data, sesi.id)
@@ -111,6 +119,14 @@ export default function Home() {
           <>
             <SesiTerakhir data={data} sesi={terakhir} />
             <div className="boards">
+              <Leaderboard
+                judul="Rating pemain"
+                statKey="rating"
+                items={papanRating(stats).slice(0, 3)}
+                lihatSemua="/statistik?urut=rating"
+                nilai={(s) => formatDesimal(s.rating)}
+                catatan={`Rata-rata rating per sesi (1–10)${stats.some((s) => s.hadir >= MIN_HADIR_RATING) ? `, minimal hadir ${MIN_HADIR_RATING} sesi` : ''}.`}
+              />
               {BOARDS.map((b) => (
                 <Leaderboard
                   key={b.key}

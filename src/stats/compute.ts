@@ -3,8 +3,8 @@ import type { BarisStat, JadwalLaga, Laga, LeagueData, Pemain, Poin, Sesi } from
 
 export type Rentang = 'semua' | 'bulan-ini'
 
-export type StatKey = 'rating' | 'hadir' | 'gol' | 'assist' | 'motm' | 'menang' | 'winRate' | 'poinPerSesi'
-export const STAT_KEYS: StatKey[] = ['rating', 'hadir', 'gol', 'assist', 'motm', 'menang', 'winRate', 'poinPerSesi']
+export type StatKey = 'rating' | 'poin' | 'hadir' | 'gol' | 'assist' | 'motm' | 'menang' | 'winRate'
+export const STAT_KEYS: StatKey[] = ['rating', 'poin', 'hadir', 'gol', 'assist', 'motm', 'menang', 'winRate']
 
 export function isStatKey(v: unknown): v is StatKey {
   return typeof v === 'string' && (STAT_KEYS as string[]).includes(v)
@@ -20,8 +20,8 @@ export interface PlayerStats {
   seri: number
   kalah: number
   winRate: number
-  rating: number
-  poinPerSesi: number
+  rating: number // rata-rata rating per sesi, skala 1–10
+  poin: number // total poin
   peringkat: number | null
   // khusus kiper
   kebobolan: number
@@ -38,12 +38,14 @@ export interface Riwayat {
   assist: number
   motm: boolean
   poin: number
+  rating: number
 }
 
 export interface BarisSesi {
   pemain: Pemain
   baris: BarisStat
   poin: number
+  rating: number
 }
 
 export function poinBaris(b: BarisStat, poin: Poin): number {
@@ -52,6 +54,12 @@ export function poinBaris(b: BarisStat, poin: Poin): number {
   if (b.motm) total += p('motm')
   total += b.cleanSheet * p('clean_sheet') + b.kebobolanSatu * p('kebobolan_1')
   return total + b.menang * p('menang') + b.seri * p('seri') + b.kalah * p('kalah')
+}
+
+// Rating sesi ala rating pemain Eropa: main biasa (poin 2,5) bernilai 6,0, tiap poin menambah 0,3, dibatasi 3,0–10,0.
+export function ratingSesi(poin: number): number {
+  const r = Math.min(10, Math.max(3, 6 + 0.3 * (poin - 2.5)))
+  return Math.round(r * 10) / 10
 }
 
 function bulanKey(d: Date): string {
@@ -65,7 +73,7 @@ function sesiDalamRentang(sesi: Sesi[], rentang: Rentang, today: Date): Sesi[] {
 }
 
 export function compareDefault(a: PlayerStats, b: PlayerStats): number {
-  return b.rating - a.rating || b.poinPerSesi - a.poinPerSesi || b.gol - a.gol || a.pemain.nama.localeCompare(b.pemain.nama, 'id')
+  return b.rating - a.rating || b.poin - a.poin || b.gol - a.gol || a.pemain.nama.localeCompare(b.pemain.nama, 'id')
 }
 
 // Top skor dan top assist saling jadi penentu kalau jumlahnya sama, baru setelah itu urutan bawaan.
@@ -80,7 +88,7 @@ export function computePlayerStats(data: LeagueData, rentang: Rentang = 'semua',
   const sesiIds = new Set(sesiDalamRentang(data.sesi, rentang, today).map((s) => s.id))
   const byPemain = new Map<string, PlayerStats>()
   for (const pemain of data.pemain) {
-    byPemain.set(pemain.id, { pemain, hadir: 0, gol: 0, assist: 0, motm: 0, menang: 0, seri: 0, kalah: 0, winRate: 0, rating: 0, poinPerSesi: 0, peringkat: null, kebobolan: 0, cleanSheet: 0 })
+    byPemain.set(pemain.id, { pemain, hadir: 0, gol: 0, assist: 0, motm: 0, menang: 0, seri: 0, kalah: 0, winRate: 0, rating: 0, poin: 0, peringkat: null, kebobolan: 0, cleanSheet: 0 })
   }
   for (const b of data.statistik) {
     if (!sesiIds.has(b.sesiId)) continue
@@ -95,13 +103,15 @@ export function computePlayerStats(data: LeagueData, rentang: Rentang = 'semua',
     s.kalah += b.kalah
     s.kebobolan += b.kebobolan
     s.cleanSheet += b.cleanSheet
-    s.rating += poinBaris(b, data.poin)
+    const poin = poinBaris(b, data.poin)
+    s.poin += poin
+    s.rating += ratingSesi(poin)
   }
   const all = [...byPemain.values()]
   for (const s of all) {
     const laga = s.menang + s.seri + s.kalah
     s.winRate = laga ? s.menang / laga : 0
-    s.poinPerSesi = s.hadir ? s.rating / s.hadir : 0
+    s.rating = s.hadir ? s.rating / s.hadir : 0
   }
   all.sort(compareDefault)
   let rank = 0
@@ -126,7 +136,9 @@ export function riwayatPemain(data: LeagueData, pemainId: string): Riwayat[] {
     .filter((b) => b.pemainId === pemainId)
     .flatMap((b) => {
       const sesi = sesiById.get(b.sesiId)
-      return sesi ? [{ sesi, tim: b.tim, menang: b.menang, seri: b.seri, kalah: b.kalah, gol: b.gol, assist: b.assist, motm: b.motm, poin: poinBaris(b, data.poin) }] : []
+      if (!sesi) return []
+      const poin = poinBaris(b, data.poin)
+      return [{ sesi, tim: b.tim, menang: b.menang, seri: b.seri, kalah: b.kalah, gol: b.gol, assist: b.assist, motm: b.motm, poin, rating: ratingSesi(poin) }]
     })
     .sort((a, b) => a.sesi.pekan - b.sesi.pekan)
 }
@@ -137,7 +149,9 @@ export function barisSesi(data: LeagueData, sesiId: string): BarisSesi[] {
     .filter((b) => b.sesiId === sesiId)
     .flatMap((baris) => {
       const pemain = pemainById.get(baris.pemainId)
-      return pemain ? [{ pemain, baris, poin: poinBaris(baris, data.poin) }] : []
+      if (!pemain) return []
+      const poin = poinBaris(baris, data.poin)
+      return [{ pemain, baris, poin, rating: ratingSesi(poin) }]
     })
     .sort((a, b) => b.poin - a.poin || a.pemain.nama.localeCompare(b.pemain.nama, 'id'))
 }

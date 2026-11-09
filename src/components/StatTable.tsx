@@ -4,20 +4,20 @@ import { formatAngka, formatDesimal, formatPersen, POSISI_LABEL } from '../lib/f
 import type { PlayerStats, StatKey } from '../stats/compute'
 
 const KOLOM: { key: StatKey; label: string; title: string }[] = [
-  { key: 'rating', label: 'Rating', title: 'Total poin' },
+  { key: 'rating', label: 'Rating', title: 'Rata-rata rating per sesi (1–10)' },
   { key: 'hadir', label: 'Hadir', title: 'Jumlah sesi' },
   { key: 'gol', label: 'Gol', title: 'Gol' },
   { key: 'assist', label: 'Ast', title: 'Assist' },
   { key: 'motm', label: 'MOTM', title: 'Man of the match' },
   { key: 'menang', label: 'M-S-K', title: 'Menang-seri-kalah per laga' },
   { key: 'winRate', label: 'Win%', title: 'Persentase menang per laga' },
-  { key: 'poinPerSesi', label: 'Poin/S', title: 'Rata-rata poin per sesi' },
+  { key: 'poin', label: 'Poin', title: 'Total poin' },
 ]
 
 function cell(s: PlayerStats, key: StatKey): string {
   if (key === 'menang') return `${s.menang}-${s.seri}-${s.kalah}`
   if (key === 'winRate') return formatPersen(s.winRate)
-  if (key === 'poinPerSesi') return formatDesimal(s.poinPerSesi)
+  if (key === 'rating') return formatDesimal(s.rating)
   return formatAngka(s[key])
 }
 

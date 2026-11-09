@@ -6,7 +6,7 @@ import { StandingTable } from '../components/StandingTable'
 import { EmptyState, NotFound } from '../components/StatusStates'
 import { kunciTim } from '../data/parse'
 import type { JadwalLaga, Sesi } from '../data/types'
-import { formatAngka, formatTanggal, isoHariIni, POSISI_LABEL } from '../lib/format'
+import { formatDesimal, formatTanggal, isoHariIni, POSISI_LABEL } from '../lib/format'
 import { bagikan, gambarFeed, gambarStory, type DataGambar } from '../lib/gambarLineup'
 import { warnaTim } from '../lib/warnaTim'
 import { barisSesi, jadwalSesi, jamLaga, lagaSesi, lineupSesi, sesiLive, standingSesi, timSesi, sudahMain, type BarisSesi, type BarisStanding, type TimLineup } from '../stats/compute'
@@ -81,8 +81,8 @@ function BarisPemain({ b }: { b: BarisSesi }) {
           {[POSISI_LABEL[b.pemain.posisi], b.baris.gol ? `${b.baris.gol} gol` : null, b.baris.assist ? `${b.baris.assist} assist` : null].filter(Boolean).join(' · ')}
         </div>
       </div>
-      <span className="lb-val" title="Poin sesi ini">
-        {formatAngka(b.poin)}
+      <span className="lb-val" title="Rating sesi ini (1–10)">
+        {formatDesimal(b.rating)}
       </span>
     </Link>
   )

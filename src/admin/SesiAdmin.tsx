@@ -191,8 +191,8 @@ function SesiForm({ data, sesiId, kirim, simpan: { status, jalankan, sibuk }, on
 
   const acak = () => {
     const stats = computePlayerStats(data).filter((s) => s.hadir > 0)
-    const kekuatan = new Map(stats.map((s) => [s.pemain.id, s.poinPerSesi]))
-    const tengah = median(stats.map((s) => s.poinPerSesi))
+    const kekuatan = new Map(stats.map((s) => [s.pemain.id, s.rating]))
+    const tengah = median(stats.map((s) => s.rating))
     const hadir = semua.filter((p) => tugas.has(p.kunci))
     const tim = bagiSeimbang(
       hadir.map((p) => ({ id: p.kunci, posisi: p.posisi, kekuatan: kekuatan.get(p.kunci) ?? tengah })),
